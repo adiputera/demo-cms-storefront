@@ -1,0 +1,123 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: cms-postgres
+    environment:
+      POSTGRES_DB: headless_cms
+      POSTGRES_USER: cms_user
+      POSTGRES_PASSWORD: cms_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cms_user -d headless_cms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - cms-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: cms-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - cms-network
+
+  # CMS Backend (runs first to execute Flyway migrations)
+  cms-backend:
+    build:
+      context: ./cms-backend
+      dockerfile: Dockerfile
+    container_name: cms-backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/headless_cms
+      DATABASE_USERNAME: cms_user
+      DATABASE_PASSWORD: cms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: 8081
+      LOG_LEVEL: INFO
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - cms-network
+
+  # Storefront Backend (read-only)
+  storefront-backend:
+    build:
+      context: ./storefront-backend
+      dockerfile: Dockerfile
+    container_name: storefront-backend
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/headless_cms
+      DATABASE_USERNAME: cms_user
+      DATABASE_PASSWORD: cms_password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      SERVER_PORT: 8080
+      LOG_LEVEL: INFO
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      cms-backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - cms-network
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cms-frontend
+    environment:
+      NEXT_PUBLIC_STOREFRONT_API_URL: http://localhost:8080
+      NEXT_PUBLIC_CMS_API_URL: http://localhost:8081
+    ports:
+      - "3000:3000"
+    depends_on:
+      - storefront-backend
+      - cms-backend
+    networks:
+      - cms-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  cms-network:
+    driver: bridge

@@ -1,0 +1,9 @@
+package com.demo.cms.entity;
+
+public enum ComponentType {
+    PARAGRAPH,
+    BANNER,
+    PRODUCT_CAROUSEL,
+    NAVIGATION,
+    QUICK_MENU
+}
