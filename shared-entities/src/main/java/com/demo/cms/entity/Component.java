@@ -11,8 +11,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -25,9 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "components", indexes = {
-    @Index(name = "idx_components_slot_order", columnList = "slot_id, sort_order")
-})
+@Table(name = "components")
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
@@ -53,14 +50,7 @@ public abstract class Component {
     @Column(name = "type", nullable = false, length = 50)
     private String type;
 
-    @NotNull(message = "Sort order is required")
-    @Column(name = "sort_order", nullable = false)
-    private Integer sortOrder;
 
-    // Relationships
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "slot_id", nullable = false)
-    private Slot slot;
 
     // Audit Fields
     @Column(name = "created_at", nullable = false, updatable = false)

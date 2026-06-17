@@ -15,10 +15,12 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.demo.cms.admin.dto.CreateSlotRequest;
 import com.demo.cms.admin.dto.SlotResponse;
 import com.demo.cms.admin.dto.UpdateSlotRequest;
+import com.demo.cms.admin.service.StorefrontCacheEvictionService;
 import com.demo.cms.admin.exception.ResourceNotFoundException;
 import com.demo.cms.admin.repository.PageRepository;
 import com.demo.cms.admin.repository.SlotRepository;
@@ -34,11 +36,13 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/cms/slots")
 @RequiredArgsConstructor
 @Validated
+@CrossOrigin(origins = "*")
 public class SlotManagementController {
 
     private final SlotRepository slotRepository;
     private final PageRepository pageRepository;
     private final EntityMapper entityMapper;
+    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
 
     @GetMapping("/page/{pageId}")
     public ResponseEntity<List<SlotResponse>> getSlotsByPage(@PathVariable Long pageId) {
@@ -69,6 +73,7 @@ public class SlotManagementController {
             .build();
 
         Slot savedSlot = slotRepository.save(slot);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot));
     }
 
@@ -85,6 +90,7 @@ public class SlotManagementController {
         slot.setName(request.getName());
 
         Slot updatedSlot = slotRepository.save(slot);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.ok(mapToSlotResponse(updatedSlot));
     }
 
@@ -95,6 +101,7 @@ public class SlotManagementController {
             throw new ResourceNotFoundException("Slot not found with id: " + id);
         }
         slotRepository.deleteById(id);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 

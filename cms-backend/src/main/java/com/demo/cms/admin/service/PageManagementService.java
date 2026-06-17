@@ -22,6 +22,7 @@ public class PageManagementService {
 
     private final PageRepository pageRepository;
     private final EntityMapper entityMapper;
+    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
 
     @Transactional(readOnly = true)
     public List<PageDTO> getAllPages() {
@@ -66,7 +67,7 @@ public class PageManagementService {
 
         Page savedPage = pageRepository.save(page);
         log.info("Page created successfully with ID: {}", savedPage.getId());
-        
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toPageDTO(savedPage, true);
     }
 
@@ -99,7 +100,7 @@ public class PageManagementService {
 
         Page updatedPage = pageRepository.save(page);
         log.info("Page updated successfully with ID: {}", updatedPage.getId());
-        
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toPageDTO(updatedPage, true);
     }
 
@@ -113,6 +114,7 @@ public class PageManagementService {
         }
 
         pageRepository.deleteById(id);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Page deleted successfully with ID: {}", id);
     }
 }

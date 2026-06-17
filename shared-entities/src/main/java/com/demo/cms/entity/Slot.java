@@ -14,8 +14,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OrderBy;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -57,8 +58,13 @@ public class Slot {
     @JoinColumn(name = "page_id", nullable = false)
     private Page page;
 
-    @OneToMany(mappedBy = "slot", cascade = CascadeType.ALL, orphanRemoval = true)
-    @OrderBy("sortOrder ASC")
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "slot_components",
+        joinColumns = @JoinColumn(name = "slot_id"),
+        inverseJoinColumns = @JoinColumn(name = "component_id")
+    )
+    @OrderColumn(name = "sort_order")
     @Builder.Default
     private List<Component> components = new ArrayList<>();
 

@@ -9,6 +9,4 @@ import com.demo.cms.entity.Component;
 
 @Repository
 public interface ComponentRepository extends JpaRepository<Component, Long> {
-    
-    List<Component> findBySlotIdOrderBySortOrder(Long slotId);
 }

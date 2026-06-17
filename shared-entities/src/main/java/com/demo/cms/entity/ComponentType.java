@@ -5,5 +5,6 @@ public enum ComponentType {
     BANNER,
     PRODUCT_CAROUSEL,
     NAVIGATION,
-    QUICK_MENU
+    QUICK_MENU,
+    PRODUCT_DETAIL
 }

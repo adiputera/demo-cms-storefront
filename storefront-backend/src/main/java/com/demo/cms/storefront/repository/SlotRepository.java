@@ -15,6 +15,6 @@ public interface SlotRepository extends JpaRepository<Slot, Long> {
     @Query("SELECT DISTINCT s FROM Slot s " +
            "LEFT JOIN FETCH s.components c " +
            "WHERE s.id IN :slotIds " +
-           "ORDER BY s.id, c.sortOrder")
+           "ORDER BY s.id")
     List<Slot> findByIdInWithComponents(@Param("slotIds") List<Long> slotIds);
 }

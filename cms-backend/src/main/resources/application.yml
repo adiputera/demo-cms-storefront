@@ -25,10 +25,7 @@ spring:
         default_schema: public
 
   flyway:
-    enabled: true
-    baseline-on-migrate: true
-    locations: classpath:db/migration
-    default-schema: public
+    enabled: false
 
   data:
     redis:

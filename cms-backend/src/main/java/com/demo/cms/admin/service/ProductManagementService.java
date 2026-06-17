@@ -23,6 +23,7 @@ public class ProductManagementService {
 
     private final ProductRepository productRepository;
     private final EntityMapper entityMapper;
+    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
 
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
@@ -61,7 +62,7 @@ public class ProductManagementService {
 
         Product savedProduct = productRepository.save(product);
         log.info("Product created successfully with ID: {}", savedProduct.getId());
-        
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toProductDTO(savedProduct);
     }
 
@@ -90,7 +91,7 @@ public class ProductManagementService {
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully with ID: {}", updatedProduct.getId());
-        
+        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toProductDTO(updatedProduct);
     }
 
@@ -104,6 +105,7 @@ public class ProductManagementService {
         }
 
         productRepository.deleteById(id);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Product deleted successfully with ID: {}", id);
     }
 }

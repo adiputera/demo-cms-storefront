@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
     @JsonSubTypes.Type(value = CreateParagraphComponentRequest.class, name = "PARAGRAPH"),
     @JsonSubTypes.Type(value = CreateProductCarouselComponentRequest.class, name = "PRODUCT_CAROUSEL"),
     @JsonSubTypes.Type(value = CreateNavigationComponentRequest.class, name = "NAVIGATION"),
-    @JsonSubTypes.Type(value = CreateQuickMenuComponentRequest.class, name = "QUICK_MENU")
+    @JsonSubTypes.Type(value = CreateQuickMenuComponentRequest.class, name = "QUICK_MENU"),
+    @JsonSubTypes.Type(value = CreateProductDetailComponentRequest.class, name = "PRODUCT_DETAIL")
 })
 public abstract class CreateComponentRequest {
     
@@ -37,10 +38,8 @@ public abstract class CreateComponentRequest {
     @NotBlank(message = "Component type is required")
     private String type;
     
-    @NotNull(message = "Sort order is required")
     private Integer sortOrder;
     
-    @NotNull(message = "Slot ID is required")
     private Long slotId;
 }
 
@@ -76,12 +75,25 @@ class CreateProductCarouselComponentRequest extends CreateComponentRequest {
 @NoArgsConstructor
 @AllArgsConstructor
 class CreateNavigationComponentRequest extends CreateComponentRequest {
-    private List<Map<String, String>> links; // [{label, url, icon}]
+    private String displayText;
+    private String url;
+    private String icon;
 }
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 class CreateQuickMenuComponentRequest extends CreateComponentRequest {
-    private List<Map<String, String>> tiles; // [{title, imageUrl, linkUrl}]
+    private String title;
+    private String imageUrl;
+    private String url;
+}
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+class CreateProductDetailComponentRequest extends CreateComponentRequest {
+    private String title;
+    private Boolean showPrice;
+    private Boolean showDescription;
 }

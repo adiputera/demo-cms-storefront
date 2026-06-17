@@ -75,11 +75,17 @@ public class EntityMapper {
             return null;
         }
 
-        List<ComponentDTO> components = slot.getComponents() != null
-                ? slot.getComponents().stream()
-                        .map(this::toComponentDTO)
-                        .collect(Collectors.toList())
-                : Collections.emptyList();
+        List<ComponentDTO> components = new java.util.ArrayList<>();
+        if (slot.getComponents() != null) {
+            int sortOrder = 0;
+            for (com.demo.cms.entity.Component component : slot.getComponents()) {
+                ComponentDTO dto = toComponentDTO(component);
+                if (dto != null) {
+                    dto.setSortOrder(sortOrder++);
+                    components.add(dto);
+                }
+            }
+        }
 
         return SlotDTO.builder()
                 .id(slot.getId())
@@ -103,6 +109,7 @@ public class EntityMapper {
             case PRODUCT_CAROUSEL -> toProductCarouselComponentDTO((ProductCarouselComponent) component);
             case NAVIGATION -> toNavigationComponentDTO((NavigationComponent) component);
             case QUICK_MENU -> toQuickMenuComponentDTO((QuickMenuComponent) component);
+            case PRODUCT_DETAIL -> toProductDetailComponentDTO((ProductDetailComponent) component);
         };
     }
 
@@ -112,7 +119,6 @@ public class EntityMapper {
                 .uid(component.getUid())
                 .name(component.getName())
                 .type(component.getType().name())
-                .sortOrder(component.getSortOrder())
                 .title(component.getTitle())
                 .content(component.getContent())
                 .build();
@@ -124,7 +130,6 @@ public class EntityMapper {
                 .uid(component.getUid())
                 .name(component.getName())
                 .type(component.getType().name())
-                .sortOrder(component.getSortOrder())
                 .imageUrl(component.getImageUrl())
                 .altText(component.getAltText())
                 .title(component.getTitle())
@@ -144,7 +149,6 @@ public class EntityMapper {
                 .uid(component.getUid())
                 .name(component.getName())
                 .type(component.getType().name())
-                .sortOrder(component.getSortOrder())
                 .title(component.getTitle())
                 .productCodes(productCodes)
                 .build();
@@ -156,7 +160,6 @@ public class EntityMapper {
                 .uid(component.getUid())
                 .name(component.getName())
                 .type(component.getType().name())
-                .sortOrder(component.getSortOrder())
                 .displayText(component.getDisplayText())
                 .url(component.getUrl())
                 .icon(component.getIcon())
@@ -169,10 +172,21 @@ public class EntityMapper {
                 .uid(component.getUid())
                 .name(component.getName())
                 .type(component.getType().name())
-                .sortOrder(component.getSortOrder())
                 .title(component.getTitle())
                 .imageUrl(component.getImageUrl())
                 .url(component.getUrl())
+                .build();
+     }
+
+    private ProductDetailComponentDTO toProductDetailComponentDTO(ProductDetailComponent component) {
+        return ProductDetailComponentDTO.builder()
+                .id(component.getId())
+                .uid(component.getUid())
+                .name(component.getName())
+                .type(component.getType().name())
+                .title(component.getTitle())
+                .showPrice(component.getShowPrice())
+                .showDescription(component.getShowDescription())
                 .build();
     }
 
