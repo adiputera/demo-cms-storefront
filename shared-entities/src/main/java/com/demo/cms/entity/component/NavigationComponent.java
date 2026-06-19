@@ -1,5 +1,7 @@
 package com.demo.cms.entity.component;
 
+import com.demo.cms.annotation.CmsComponent;
+import com.demo.cms.annotation.CmsField;
 import com.demo.cms.entity.Component;
 import com.demo.cms.entity.ComponentType;
 
@@ -21,20 +23,24 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CmsComponent(displayName = "Navigation Link", description = "Simple link with label and URL")
 public class NavigationComponent extends Component {
 
     @NotBlank(message = "Display text is required")
     @Size(max = 255)
     @Column(name = "display_text", nullable = false)
+    @CmsField(displayName = "Display Text", type = "string", required = true, placeholder = "Link Label")
     private String displayText;
 
     @NotBlank(message = "URL is required")
     @Size(max = 500)
     @Column(name = "url", nullable = false)
+    @CmsField(displayName = "URL", type = "string", required = true, placeholder = "/about-us")
     private String url;
 
     @Size(max = 100)
     @Column(name = "icon")
+    @CmsField(displayName = "Icon Name", type = "string", required = false, placeholder = "home")
     private String icon;
 
     @Override
@@ -42,3 +48,4 @@ public class NavigationComponent extends Component {
         return ComponentType.NAVIGATION;
     }
 }
+

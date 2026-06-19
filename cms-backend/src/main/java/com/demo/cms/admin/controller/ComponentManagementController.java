@@ -18,6 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
+import com.demo.cms.admin.dto.ComponentField;
+import com.demo.cms.admin.dto.ComponentSchema;
+import com.demo.cms.admin.dto.ComponentTypeInfo;
 import com.demo.cms.admin.dto.CreateComponentRequest;
 import com.demo.cms.admin.dto.ReorderComponentRequest;
 import com.demo.cms.admin.exception.BadRequestException;
@@ -55,6 +58,7 @@ public class ComponentManagementController {
     private final EntityMapper entityMapper;
     private final ObjectMapper objectMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+    private final com.demo.cms.admin.service.ComponentSchemaService componentSchemaService;
 
     @GetMapping
     public ResponseEntity<List<ComponentDTO>> getAllComponents() {
@@ -352,82 +356,13 @@ public class ComponentManagementController {
         return Boolean.parseBoolean(value.toString());
     }
 
-    // --- Schema Metadata Classes & Endpoints ---
-
-    @Getter
-    @AllArgsConstructor
-    public static class ComponentTypeInfo {
-        private String type;
-        private String displayName;
-        private String description;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class ComponentField {
-        private String name;
-        private String displayName;
-        private String type; // "string", "text", "boolean", "array_string"
-        private boolean required;
-        private String placeholder;
-    }
-
-    @Getter
-    @AllArgsConstructor
-    public static class ComponentSchema {
-        private String type;
-        private String displayName;
-        private List<ComponentField> fields;
-    }
-
     @GetMapping("/types")
     public ResponseEntity<List<ComponentTypeInfo>> getComponentTypes() {
-        return ResponseEntity.ok(List.of(
-            new ComponentTypeInfo("BANNER", "Hero Banner", "Image banner with title, subtitle, and CTA button"),
-            new ComponentTypeInfo("PARAGRAPH", "Paragraph Content", "Rich text content block with optional title"),
-            new ComponentTypeInfo("PRODUCT_CAROUSEL", "Product Carousel", "Grid of selected products by codes"),
-            new ComponentTypeInfo("NAVIGATION", "Navigation Link", "Simple link with label and URL"),
-            new ComponentTypeInfo("QUICK_MENU", "Quick Menu Tile", "Visual card with title, image, and link"),
-            new ComponentTypeInfo("PRODUCT_DETAIL", "Product Details", "Dynamic details layout for the current product context")
-        ));
+        return ResponseEntity.ok(componentSchemaService.getComponentTypes());
     }
 
     @GetMapping("/types/{type}/schema")
     public ResponseEntity<ComponentSchema> getComponentSchema(@PathVariable String type) {
-        ComponentSchema schema = switch (type.toUpperCase()) {
-            case "BANNER" -> new ComponentSchema("BANNER", "Hero Banner", List.of(
-                new ComponentField("imageUrl", "Image URL", "string", true, "https://images.unsplash.com/..."),
-                new ComponentField("altText", "Alt Text", "string", false, "Alternative text description"),
-                new ComponentField("title", "Title", "string", true, "Banner Title"),
-                new ComponentField("subtitle", "Subtitle", "string", false, "Banner Subtitle"),
-                new ComponentField("ctaText", "CTA Text", "string", false, "Shop Now"),
-                new ComponentField("ctaUrl", "CTA URL", "string", false, "/products")
-            ));
-            case "PARAGRAPH" -> new ComponentSchema("PARAGRAPH", "Paragraph Content", List.of(
-                new ComponentField("title", "Title (Optional)", "string", false, "Section Title"),
-                new ComponentField("content", "Content (HTML allowed)", "text", true, "<p>Write text here...</p>")
-            ));
-            case "PRODUCT_CAROUSEL" -> new ComponentSchema("PRODUCT_CAROUSEL", "Product Carousel", List.of(
-                new ComponentField("title", "Carousel Title", "string", true, "Featured Products"),
-                new ComponentField("productCodes", "Product Codes (comma-separated)", "array_string", true, "macbook-pro, iphone-15-pro")
-            ));
-            case "NAVIGATION" -> new ComponentSchema("NAVIGATION", "Navigation Link", List.of(
-                new ComponentField("displayText", "Display Text", "string", true, "Link Label"),
-                new ComponentField("url", "URL", "string", true, "/about-us"),
-                new ComponentField("icon", "Icon Name", "string", false, "home")
-            ));
-            case "QUICK_MENU" -> new ComponentSchema("QUICK_MENU", "Quick Menu Tile", List.of(
-                new ComponentField("title", "Tile Title", "string", true, "Promo"),
-                new ComponentField("imageUrl", "Image URL", "string", true, "https://images.unsplash.com/..."),
-                new ComponentField("url", "Target URL", "string", true, "/promo")
-            ));
-            case "PRODUCT_DETAIL" -> new ComponentSchema("PRODUCT_DETAIL", "Product Details", List.of(
-                new ComponentField("title", "Title (Optional)", "string", false, "Product Details Override Title"),
-                new ComponentField("showPrice", "Show Price", "boolean", false, "true"),
-                new ComponentField("showDescription", "Show Description", "boolean", false, "true")
-            ));
-            default -> throw new BadRequestException("Unknown component type: " + type);
-        };
-        return ResponseEntity.ok(schema);
+        return ResponseEntity.ok(componentSchemaService.getComponentSchema(type));
     }
 }

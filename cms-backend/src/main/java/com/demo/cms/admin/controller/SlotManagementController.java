@@ -106,9 +106,17 @@ public class SlotManagementController {
     }
 
     private SlotResponse mapToSlotResponse(Slot slot) {
-        List<ComponentDTO> componentDTOs = slot.getComponents().stream()
-            .map(entityMapper::toComponentDTO)
-            .collect(Collectors.toList());
+        java.util.List<ComponentDTO> componentDTOs = new java.util.ArrayList<>();
+        if (slot.getComponents() != null) {
+            int sortOrder = 0;
+            for (com.demo.cms.entity.Component component : slot.getComponents()) {
+                ComponentDTO dto = entityMapper.toComponentDTO(component);
+                if (dto != null) {
+                    dto.setSortOrder(sortOrder++);
+                    componentDTOs.add(dto);
+                }
+            }
+        }
 
         return SlotResponse.builder()
             .id(slot.getId())

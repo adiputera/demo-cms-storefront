@@ -1,5 +1,7 @@
 package com.demo.cms.entity.component;
 
+import com.demo.cms.annotation.CmsComponent;
+import com.demo.cms.annotation.CmsField;
 import com.demo.cms.entity.Component;
 import com.demo.cms.entity.ComponentType;
 
@@ -20,13 +22,16 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CmsComponent(displayName = "Product Carousel", description = "Grid of selected products by codes")
 public class ProductCarouselComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
+    @CmsField(displayName = "Carousel Title", type = "string", required = true, placeholder = "Featured Products")
     private String title;
 
     @Column(name = "product_codes", columnDefinition = "TEXT")
+    @CmsField(displayName = "Product Codes (comma-separated)", type = "array_string", required = true, placeholder = "macbook-pro, iphone-15-pro")
     private String productCodes; // Comma-separated list of product codes
 
     @Override
@@ -34,3 +39,4 @@ public class ProductCarouselComponent extends Component {
         return ComponentType.PRODUCT_CAROUSEL;
     }
 }
+

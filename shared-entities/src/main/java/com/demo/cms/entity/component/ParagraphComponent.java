@@ -1,5 +1,7 @@
 package com.demo.cms.entity.component;
 
+import com.demo.cms.annotation.CmsComponent;
+import com.demo.cms.annotation.CmsField;
 import com.demo.cms.entity.Component;
 import com.demo.cms.entity.ComponentType;
 
@@ -20,13 +22,16 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CmsComponent(displayName = "Paragraph Content", description = "Rich text content block with optional title")
 public class ParagraphComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
+    @CmsField(displayName = "Title (Optional)", type = "string", required = false, placeholder = "Section Title")
     private String title;
 
     @Column(name = "content", columnDefinition = "TEXT")
+    @CmsField(displayName = "Content (HTML allowed)", type = "text", required = true, placeholder = "<p>Write text here...</p>")
     private String content;
 
     @Override
@@ -34,3 +39,4 @@ public class ParagraphComponent extends Component {
         return ComponentType.PARAGRAPH;
     }
 }
+
