@@ -12,7 +12,7 @@ import com.demo.cms.entity.Catalog;
 import org.springframework.data.repository.query.Param;
 
 @Repository
-public interface PageRepository extends JpaRepository<Page, Long> {
+public interface PageRepository extends CatalogAwareRepository<Page> {
     
     @Query("SELECT p FROM Page p LEFT JOIN FETCH p.breadcrumbs LEFT JOIN FETCH p.slots WHERE p.slug = :slug AND p.catalog = :catalog")
     Optional<Page> findBySlugWithRelations(@Param("slug") String slug, @Param("catalog") Catalog catalog);

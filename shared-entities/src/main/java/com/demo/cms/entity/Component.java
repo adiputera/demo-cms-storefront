@@ -36,9 +36,10 @@ import jakarta.persistence.UniqueConstraint;
 @AllArgsConstructor
 public abstract class Component extends CatalogAwareModel {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Override
+    public String getSyncKey() {
+        return getUid();
+    }
 
     @NotBlank(message = "UID is required")
     @Size(max = 100)

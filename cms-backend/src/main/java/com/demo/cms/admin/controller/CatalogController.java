@@ -22,4 +22,10 @@ public class CatalogController {
         catalogSyncService.syncCatalog(catalogId);
         return ResponseEntity.ok().build();
     }
+
+    @PostMapping("/item/{entityType}/{itemId}")
+    public ResponseEntity<Void> syncSingleItem(@PathVariable String entityType, @PathVariable Long itemId) {
+        catalogSyncService.syncSingleItem(entityType, itemId);
+        return ResponseEntity.ok().build();
+    }
 }

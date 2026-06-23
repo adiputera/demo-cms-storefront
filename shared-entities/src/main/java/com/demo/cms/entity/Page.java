@@ -41,9 +41,10 @@ import lombok.Setter;
 @Builder
 public class Page extends CatalogAwareModel {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Override
+    public String getSyncKey() {
+        return getSlug();
+    }
 
     @NotBlank(message = "Slug is required")
     @Size(max = 255)

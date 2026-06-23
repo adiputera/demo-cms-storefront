@@ -10,7 +10,7 @@ import com.demo.cms.entity.Catalog;
 import java.util.Optional;
 
 @Repository
-public interface ComponentRepository extends JpaRepository<Component, Long> {
+public interface ComponentRepository extends CatalogAwareRepository<Component> {
     List<Component> findAllByCatalog(Catalog catalog);
     Optional<Component> findByUidAndCatalog(String uid, Catalog catalog);
 }

@@ -42,9 +42,10 @@ import lombok.Setter;
 @Builder
 public class Slot extends CatalogAwareModel {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Override
+    public String getSyncKey() {
+        return getCode() + "|" + (getPage() != null ? getPage().getSlug() : "null");
+    }
 
     @NotBlank(message = "Slot code is required")
     @Size(max = 100)

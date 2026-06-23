@@ -12,7 +12,7 @@ import com.demo.cms.entity.Catalog;
 import org.springframework.data.repository.query.Param;
 
 @Repository
-public interface SlotRepository extends JpaRepository<Slot, Long> {
+public interface SlotRepository extends CatalogAwareRepository<Slot> {
     
     @Query("SELECT s FROM Slot s LEFT JOIN FETCH s.components WHERE s.id = :id")
     Optional<Slot> findByIdWithComponents(@Param("id") Long id);
