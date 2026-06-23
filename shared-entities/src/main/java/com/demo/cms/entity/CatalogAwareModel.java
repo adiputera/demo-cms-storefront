@@ -34,6 +34,9 @@ public abstract class CatalogAwareModel implements SyncableEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "sync_version", nullable = false)
+    private Integer syncVersion = 1;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -43,5 +46,10 @@ public abstract class CatalogAwareModel implements SyncableEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        if (syncVersion == null) {
+            syncVersion = 1;
+        } else {
+            syncVersion++;
+        }
     }
 }

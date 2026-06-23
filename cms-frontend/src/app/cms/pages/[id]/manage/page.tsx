@@ -3,11 +3,13 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { cmsApiClient } from '@/lib/cms-api-client';
+import SyncSingleItemButton from '../../../components/SyncSingleItemButton';
 
 interface Slot {
   id: number;
   code: string;
   name: string;
+  syncStatus?: string;
   components: Component[];
 }
 
@@ -17,6 +19,7 @@ interface Component {
   name: string;
   type: string;
   sortOrder: number;
+  syncStatus?: string;
   [key: string]: any;
 }
 
@@ -181,9 +184,14 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
             {slots.map((slot) => (
               <div key={slot.id} className="border border-gray-300 rounded-lg p-6 bg-white">
                 <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">{slot.name}</h3>
-                    <p className="text-sm text-gray-500">Code: {slot.code}</p>
+                  <div className="flex items-center gap-3">
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900">{slot.name}</h3>
+                      <p className="text-sm text-gray-500">Code: {slot.code}</p>
+                    </div>
+                    {slot.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
+                    {slot.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
+                    {slot.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
                   </div>
                   <div className="space-x-2">
                     <button
@@ -201,6 +209,11 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
                     >
                       Delete Slot
                     </button>
+                    <SyncSingleItemButton
+                      entityType="Slot"
+                      itemId={slot.id}
+                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    />
                   </div>
                 </div>
 
@@ -224,6 +237,9 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
                                 </span>
                                 <span className="font-semibold text-gray-900">{component.name}</span>
                                 <span className="text-xs text-gray-500">#{component.sortOrder}</span>
+                                {component.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
+                                {component.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
+                                {component.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
                               </div>
                               <p className="text-sm text-gray-600 mt-1">UID: {component.uid}</p>
                               <ComponentPreview component={component} />
@@ -255,6 +271,11 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
                               >
                                 Remove
                               </button>
+                              <SyncSingleItemButton
+                                entityType="Component"
+                                itemId={component.id}
+                                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                              />
                             </div>
                           </div>
                         </div>

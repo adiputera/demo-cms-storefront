@@ -23,4 +23,6 @@ public class SlotResponse {
     
     @Builder.Default
     private List<ComponentDTO> components = new ArrayList<>();
+
+    private String syncStatus;
 }

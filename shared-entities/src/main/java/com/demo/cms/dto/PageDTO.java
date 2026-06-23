@@ -40,4 +40,6 @@ public class PageDTO {
     // Relationships
     private List<SlotDTO> slots;
     private List<BreadcrumbDTO> breadcrumbs;
+
+    private String syncStatus;
 }

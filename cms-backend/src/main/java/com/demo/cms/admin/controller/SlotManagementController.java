@@ -44,6 +44,7 @@ public class SlotManagementController {
     private final com.demo.cms.admin.repository.CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+    private final com.demo.cms.admin.service.CatalogSyncService catalogSyncService;
 
     private com.demo.cms.entity.Catalog getStagedCatalog() {
         return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
@@ -58,8 +59,17 @@ public class SlotManagementController {
     @GetMapping("/page/{pageId}")
     public ResponseEntity<List<SlotResponse>> getSlotsByPage(@PathVariable Long pageId) {
         List<Slot> slots = slotRepository.findByPageId(pageId);
+        
+        java.util.Map<String, String> slotSyncStatus = catalogSyncService.calculateSyncStatus(slots, Slot.class);
+        
+        // Also calculate for components
+        List<com.demo.cms.entity.Component> allComponents = slots.stream()
+                .flatMap(s -> s.getComponents().stream())
+                .collect(Collectors.toList());
+        java.util.Map<String, String> componentSyncStatus = catalogSyncService.calculateSyncStatus(allComponents, com.demo.cms.entity.Component.class);
+
         List<SlotResponse> responses = slots.stream()
-            .map(this::mapToSlotResponse)
+            .map(slot -> mapToSlotResponse(slot, slotSyncStatus, componentSyncStatus))
             .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
@@ -68,7 +78,12 @@ public class SlotManagementController {
     public ResponseEntity<SlotResponse> getSlot(@PathVariable Long id) {
         Slot slot = slotRepository.findByIdWithComponents(id)
             .orElseThrow(() -> new ResourceNotFoundException("Slot not found with id: " + id));
-        return ResponseEntity.ok(mapToSlotResponse(slot));
+            
+        java.util.Map<String, String> slotSyncStatus = catalogSyncService.calculateSyncStatus(List.of(slot), Slot.class);
+        java.util.Map<String, String> componentSyncStatus = catalogSyncService.calculateSyncStatus(
+                new java.util.ArrayList<>(slot.getComponents()), com.demo.cms.entity.Component.class);
+                
+        return ResponseEntity.ok(mapToSlotResponse(slot, slotSyncStatus, componentSyncStatus));
     }
 
     @PostMapping
@@ -86,7 +101,7 @@ public class SlotManagementController {
 
         Slot savedSlot = slotRepository.save(slot);
         storefrontCacheEvictionService.evictStorefrontCaches();
-        return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot));
+        return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
     @PutMapping("/{id}")
@@ -103,7 +118,7 @@ public class SlotManagementController {
 
         Slot updatedSlot = slotRepository.save(slot);
         storefrontCacheEvictionService.evictStorefrontCaches();
-        return ResponseEntity.ok(mapToSlotResponse(updatedSlot));
+        return ResponseEntity.ok(mapToSlotResponse(updatedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
     @DeleteMapping("/{id}")
@@ -117,7 +132,7 @@ public class SlotManagementController {
         return ResponseEntity.noContent().build();
     }
 
-    private SlotResponse mapToSlotResponse(Slot slot) {
+    private SlotResponse mapToSlotResponse(Slot slot, java.util.Map<String, String> slotSyncStatus, java.util.Map<String, String> componentSyncStatus) {
         java.util.List<ComponentDTO> componentDTOs = new java.util.ArrayList<>();
         if (slot.getComponents() != null) {
             int sortOrder = 0;
@@ -125,6 +140,7 @@ public class SlotManagementController {
                 ComponentDTO dto = entityMapper.toComponentDTO(component);
                 if (dto != null) {
                     dto.setSortOrder(sortOrder++);
+                    dto.setSyncStatus(componentSyncStatus.getOrDefault(component.getSyncKey(), "UNKNOWN"));
                     componentDTOs.add(dto);
                 }
             }
@@ -136,6 +152,7 @@ public class SlotManagementController {
             .name(slot.getName())
             .pageId(slot.getPage().getId())
             .components(componentDTOs)
+            .syncStatus(slotSyncStatus.getOrDefault(slot.getSyncKey(), "UNKNOWN"))
             .build();
     }
 }

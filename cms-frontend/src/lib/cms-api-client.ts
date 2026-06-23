@@ -304,6 +304,16 @@ class CMSApiClient {
     }
   }
 
+  async syncItem(entityType: string, itemId: number) {
+    const response = await fetch(`${this.baseUrl.replace('/cms', '/sync')}/item/${entityType}/${itemId}`, {
+      method: 'POST',
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to sync item: ${response.statusText}`);
+    }
+  }
+
   // Dashboard Stats
   async getDashboardStats() {
     const response = await fetch(`${this.baseUrl}/dashboard/stats`, { cache: 'no-store' });

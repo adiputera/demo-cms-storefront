@@ -214,6 +214,48 @@ public class CatalogSyncService {
     }
 
     @SuppressWarnings("unchecked")
+    @Transactional(readOnly = true)
+    public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(List<T> stagedItems, Class<T> entityClass) {
+        Map<String, String> statusMap = new HashMap<>();
+        if (stagedItems.isEmpty()) return statusMap;
+
+        Optional<Object> repoOpt = repositories.getRepositoryFor(entityClass);
+        if (repoOpt.isEmpty()) {
+            stagedItems.forEach(item -> statusMap.put(item.getSyncKey(), "UNKNOWN"));
+            return statusMap;
+        }
+
+        CatalogAwareRepository<T> repo = (CatalogAwareRepository<T>) repoOpt.get();
+        Catalog onlineCatalog = catalogRepository.findByCatalogIdAndVersion("contentCatalog", CatalogVersion.ONLINE)
+                .orElse(null);
+
+        if (onlineCatalog == null) {
+            stagedItems.forEach(item -> statusMap.put(item.getSyncKey(), "NOT_SYNCED"));
+            return statusMap;
+        }
+
+        // Fetch all online items of this class. If there are many, we could filter by syncKey in a custom query,
+        // but for now, fetching all is fine since this is an admin dashboard.
+        List<T> onlineRecords = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
+        Map<String, T> onlineMap = new HashMap<>();
+        for (T o : onlineRecords) {
+            onlineMap.put(o.getSyncKey(), o);
+        }
+
+        for (T staged : stagedItems) {
+            T online = onlineMap.get(staged.getSyncKey());
+            if (online == null) {
+                statusMap.put(staged.getSyncKey(), "NOT_SYNCED");
+            } else if (staged.getSyncVersion() > online.getSyncVersion()) {
+                statusMap.put(staged.getSyncKey(), "OUT_OF_SYNC");
+            } else {
+                statusMap.put(staged.getSyncKey(), "SYNCED");
+            }
+        }
+        return statusMap;
+    }
+
+    @SuppressWarnings("unchecked")
     private <T extends CatalogAwareModel> void syncEntityClass(
             Class<T> entityClass, 
             Catalog stagedCatalog, 
@@ -275,13 +317,18 @@ public class CatalogSyncService {
 
     private <T> void copySimpleProperties(T source, T target, Class<?> entityClass) {
         EntityType<?> entityType = entityManager.getMetamodel().entity(entityClass);
-        List<String> ignoredProperties = new ArrayList<>(List.of("id", "catalog", "createdAt", "updatedAt"));
+        List<String> ignoredProperties = new ArrayList<>(List.of("id", "catalog", "createdAt", "updatedAt", "syncVersion"));
         for (Attribute<?, ?> attr : entityType.getAttributes()) {
             if (attr.isAssociation() || attr.isCollection()) {
                 ignoredProperties.add(attr.getName());
             }
         }
         org.springframework.beans.BeanUtils.copyProperties(source, target, ignoredProperties.toArray(new String[0]));
+        
+        // Explicitly copy syncVersion so the ONLINE version perfectly matches the STAGED version at the time of sync
+        if (source instanceof CatalogAwareModel && target instanceof CatalogAwareModel) {
+            ((CatalogAwareModel) target).setSyncVersion(((CatalogAwareModel) source).getSyncVersion());
+        }
     }
 
     private <T extends CatalogAwareModel> void resolveRelationships(

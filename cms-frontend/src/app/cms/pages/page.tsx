@@ -1,5 +1,6 @@
 import { cmsApiClient } from '@/lib/cms-api-client';
 import Link from 'next/link';
+import SyncSingleItemButton from '../components/SyncSingleItemButton';
 
 export default async function PagesListPage() {
   let pages = [];
@@ -45,6 +46,7 @@ export default async function PagesListPage() {
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Title</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Slug</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Meta Title</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                 <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -56,6 +58,11 @@ export default async function PagesListPage() {
                     <code className="text-sm bg-gray-100 text-gray-800 border border-gray-200 px-2 py-1 rounded font-mono">{page.slug}</code>
                   </td>
                   <td className="py-3 px-4 text-gray-700">{page.metaTitle || '-'}</td>
+                  <td className="py-3 px-4">
+                    {page.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
+                    {page.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
+                    {page.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
+                  </td>
                   <td className="py-3 px-4 text-right">
                     <div className="flex gap-2 justify-end">
                       <a
@@ -78,6 +85,7 @@ export default async function PagesListPage() {
                       >
                         Edit Page
                       </Link>
+                      <SyncSingleItemButton entityType="Page" itemId={page.id} />
                     </div>
                   </td>
                 </tr>

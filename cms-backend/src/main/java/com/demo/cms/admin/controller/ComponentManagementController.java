@@ -60,6 +60,7 @@ public class ComponentManagementController {
     private final ObjectMapper objectMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
     private final com.demo.cms.admin.service.ComponentSchemaService componentSchemaService;
+    private final com.demo.cms.admin.service.CatalogSyncService catalogSyncService;
 
     private com.demo.cms.entity.Catalog getStagedCatalog() {
         return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
@@ -74,7 +75,13 @@ public class ComponentManagementController {
     @GetMapping
     public ResponseEntity<List<ComponentDTO>> getAllComponents() {
         List<Component> components = componentRepository.findAll();
-        List<ComponentDTO> dtos = components.stream().map(entityMapper::toComponentDTO).collect(java.util.stream.Collectors.toList());
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(components, Component.class);
+        
+        List<ComponentDTO> dtos = components.stream().map(c -> {
+            ComponentDTO dto = entityMapper.toComponentDTO(c);
+            dto.setSyncStatus(syncStatusMap.getOrDefault(c.getSyncKey(), "UNKNOWN"));
+            return dto;
+        }).collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(dtos);
     }
 
@@ -96,7 +103,10 @@ public class ComponentManagementController {
         slot.getComponents().add(index, savedComponent);
         slotRepository.save(slot);
         
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(List.of(savedComponent), Component.class);
         ComponentDTO dto = entityMapper.toComponentDTO(savedComponent);
+        dto.setSyncStatus(syncStatusMap.getOrDefault(savedComponent.getSyncKey(), "UNKNOWN"));
+        
         storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
@@ -139,7 +149,10 @@ public class ComponentManagementController {
         updateComponentFromRequest(existing, request);
         Component updated = componentRepository.save(existing);
         
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(List.of(updated), Component.class);
         ComponentDTO dto = entityMapper.toComponentDTO(updated);
+        dto.setSyncStatus(syncStatusMap.getOrDefault(updated.getSyncKey(), "UNKNOWN"));
+        
         storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.ok(dto);
     }

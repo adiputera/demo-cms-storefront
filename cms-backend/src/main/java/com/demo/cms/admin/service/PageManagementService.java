@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +27,7 @@ public class PageManagementService {
     private final CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+    private final CatalogSyncService catalogSyncService;
 
     private Catalog getStagedCatalog() {
         return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
@@ -41,8 +43,15 @@ public class PageManagementService {
     public List<PageDTO> getAllPages() {
         log.debug("Fetching all pages");
         List<Page> pages = pageRepository.findAllByCatalog(getStagedCatalog());
+        
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(pages, Page.class);
+        
         return pages.stream()
-                .map(page -> entityMapper.toPageDTO(page, false))
+                .map(page -> {
+                    PageDTO dto = entityMapper.toPageDTO(page, false);
+                    dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 
@@ -51,7 +60,11 @@ public class PageManagementService {
         log.debug("Fetching page with ID: {}", id);
         Page page = pageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Page", id));
-        return entityMapper.toPageDTO(page, true);
+        
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(List.of(page), Page.class);
+        PageDTO dto = entityMapper.toPageDTO(page, true);
+        dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+        return dto;
     }
 
     @Transactional

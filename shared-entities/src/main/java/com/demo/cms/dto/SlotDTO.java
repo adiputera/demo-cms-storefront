@@ -15,5 +15,8 @@ public class SlotDTO {
     private Long id;
     private String code;
     private String name;
+    private Long pageId;
     private List<ComponentDTO> components;
+    
+    private String syncStatus;
 }

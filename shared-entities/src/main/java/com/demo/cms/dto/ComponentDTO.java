@@ -38,4 +38,6 @@ public abstract class ComponentDTO {
 
     @NotNull(message = "Sort order is required")
     private Integer sortOrder;
+
+    private String syncStatus;
 }
