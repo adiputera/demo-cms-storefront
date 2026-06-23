@@ -12,6 +12,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinTable;
@@ -29,15 +30,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "slots", indexes = {
-    @Index(name = "idx_slots_page_code", columnList = "page_id, code", unique = true)
+@Table(name = "slots", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_slots_page_code_catalog", columnNames = {"page_id", "code", "catalog_id"})
+}, indexes = {
+    @Index(name = "idx_slots_page_code", columnList = "page_id, code")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Slot {
+public class Slot extends CatalogAwareModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -68,21 +71,4 @@ public class Slot {
     @Builder.Default
     private List<Component> components = new ArrayList<>();
 
-    // Audit Fields
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

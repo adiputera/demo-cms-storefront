@@ -11,6 +11,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
@@ -28,15 +29,17 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "pages", indexes = {
-    @Index(name = "idx_pages_slug", columnList = "slug", unique = true)
+@Table(name = "pages", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_pages_slug_catalog", columnNames = {"slug", "catalog_id"})
+}, indexes = {
+    @Index(name = "idx_pages_slug", columnList = "slug")
 })
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Page {
+public class Page extends CatalogAwareModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,7 +47,7 @@ public class Page {
 
     @NotBlank(message = "Slug is required")
     @Size(max = 255)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String slug;
 
     @NotBlank(message = "Title is required")
@@ -110,21 +113,4 @@ public class Page {
     @Builder.Default
     private List<Page> breadcrumbs = new ArrayList<>();
 
-    // Audit Fields
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 }

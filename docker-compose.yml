@@ -9,8 +9,6 @@ services:
       POSTGRES_DB: headless_cms
       POSTGRES_USER: cms_user
       POSTGRES_PASSWORD: cms_password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -25,8 +23,6 @@ services:
   redis:
     image: redis:7-alpine
     container_name: cms-redis
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -38,8 +34,8 @@ services:
   # CMS Backend (runs first to execute Flyway migrations)
   cms-backend:
     build:
-      context: ./cms-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: cms-backend/Dockerfile
     container_name: cms-backend
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/headless_cms
@@ -57,7 +53,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -68,8 +64,8 @@ services:
   # Storefront Backend (read-only)
   storefront-backend:
     build:
-      context: ./storefront-backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: storefront-backend/Dockerfile
     container_name: storefront-backend
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/headless_cms
@@ -89,7 +85,7 @@ services:
       cms-backend:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -97,12 +93,29 @@ services:
     networks:
       - cms-network
 
-  # Next.js Frontend
-  frontend:
+  # Next.js CMS Frontend
+  cms-frontend:
     build:
-      context: ./frontend
+      context: ./cms-frontend
       dockerfile: Dockerfile
     container_name: cms-frontend
+    environment:
+      NEXT_PUBLIC_STOREFRONT_API_URL: http://localhost:8080
+      NEXT_PUBLIC_CMS_API_URL: http://localhost:8081
+    ports:
+      - "3001:3000"
+    depends_on:
+      - storefront-backend
+      - cms-backend
+    networks:
+      - cms-network
+
+  # Next.js Storefront Frontend
+  storefront-frontend:
+    build:
+      context: ./storefront-frontend
+      dockerfile: Dockerfile
+    container_name: storefront-frontend
     environment:
       NEXT_PUBLIC_STOREFRONT_API_URL: http://localhost:8080
       NEXT_PUBLIC_CMS_API_URL: http://localhost:8081

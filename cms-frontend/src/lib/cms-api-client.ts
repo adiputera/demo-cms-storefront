@@ -1,4 +1,7 @@
-const CMS_API_URL = process.env.NEXT_PUBLIC_CMS_API_URL || 'http://localhost:8081/api/cms';
+const isServer = typeof window === 'undefined';
+const CMS_API_URL = isServer
+  ? (process.env.CMS_API_URL_INTERNAL || 'http://cms-backend:8081/api/cms')
+  : (process.env.NEXT_PUBLIC_CMS_API_URL || 'http://localhost:8081/api/cms');
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -288,6 +291,17 @@ class CMSApiClient {
       throw new Error(`Failed to fetch component schema: ${response.statusText}`);
     }
     return response.json();
+  }
+
+  // Catalog Synchronization
+  async syncCatalog(catalogId: string) {
+    const response = await fetch(`${this.baseUrl.replace('/cms', '/sync')}/${catalogId}`, {
+      method: 'POST',
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to sync catalog: ${response.statusText}`);
+    }
   }
 
   // Dashboard Stats

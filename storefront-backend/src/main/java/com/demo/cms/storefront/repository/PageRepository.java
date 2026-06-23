@@ -15,8 +15,9 @@ public interface PageRepository extends JpaRepository<Page, Long> {
     @Query("SELECT p FROM Page p " +
            "LEFT JOIN FETCH p.breadcrumbs " +
            "LEFT JOIN FETCH p.slots " +
-           "WHERE p.slug = :slug")
+           "WHERE p.slug = :slug AND p.catalog.version = com.demo.cms.entity.CatalogVersion.ONLINE AND p.catalog.catalogId = 'contentCatalog'")
     Optional<Page> findBySlugWithRelations(@Param("slug") String slug);
 
-    Optional<Page> findBySlug(String slug);
+    @Query("SELECT p FROM Page p WHERE p.slug = :slug AND p.catalog.version = com.demo.cms.entity.CatalogVersion.ONLINE AND p.catalog.catalogId = 'contentCatalog'")
+    Optional<Page> findBySlug(@Param("slug") String slug);
 }

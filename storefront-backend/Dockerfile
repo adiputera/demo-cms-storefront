@@ -6,6 +6,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY shared-entities ./shared-entities
 COPY storefront-backend ./storefront-backend
+COPY cms-backend ./cms-backend
 
 # Build the application
 RUN mvn clean package -pl storefront-backend -am -DskipTests

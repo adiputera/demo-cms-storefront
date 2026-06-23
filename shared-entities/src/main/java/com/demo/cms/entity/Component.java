@@ -23,14 +23,18 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import jakarta.persistence.UniqueConstraint;
+
 @Entity
-@Table(name = "components")
+@Table(name = "components", uniqueConstraints = {
+    @UniqueConstraint(name = "uk_components_uid_catalog", columnNames = {"uid", "catalog_id"})
+})
 @Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public abstract class Component {
+public abstract class Component extends CatalogAwareModel {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,15 +56,10 @@ public abstract class Component {
 
 
 
-    // Audit Fields
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @PrePersist
+    @Override
     protected void onCreate() {
+        super.onCreate();
         // Set type from subclass implementation if not already set
         if (type == null) {
             ComponentType componentType = getType();
@@ -68,13 +67,6 @@ public abstract class Component {
                 type = componentType.name();
             }
         }
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
     // Abstract method to get component type (implemented by subclasses)

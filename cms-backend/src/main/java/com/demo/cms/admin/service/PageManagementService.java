@@ -2,7 +2,9 @@ package com.demo.cms.admin.service;
 
 import com.demo.cms.dto.PageDTO;
 import com.demo.cms.entity.Page;
+import com.demo.cms.entity.Catalog;
 import com.demo.cms.admin.repository.PageRepository;
+import com.demo.cms.admin.repository.CatalogRepository;
 import com.demo.cms.admin.exception.ResourceNotFoundException;
 import com.demo.cms.admin.exception.DuplicateResourceException;
 import com.demo.cms.mapper.EntityMapper;
@@ -21,13 +23,24 @@ import java.util.stream.Collectors;
 public class PageManagementService {
 
     private final PageRepository pageRepository;
+    private final CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+
+    private Catalog getStagedCatalog() {
+        return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
+            .orElseGet(() -> {
+                Catalog cat = new Catalog();
+                cat.setCatalogId("contentCatalog");
+                cat.setVersion(com.demo.cms.entity.CatalogVersion.STAGED);
+                return catalogRepository.save(cat);
+            });
+    }
 
     @Transactional(readOnly = true)
     public List<PageDTO> getAllPages() {
         log.debug("Fetching all pages");
-        List<Page> pages = pageRepository.findAll();
+        List<Page> pages = pageRepository.findAllByCatalog(getStagedCatalog());
         return pages.stream()
                 .map(page -> entityMapper.toPageDTO(page, false))
                 .collect(Collectors.toList());
@@ -46,7 +59,7 @@ public class PageManagementService {
     public PageDTO createPage(PageDTO pageDTO) {
         log.info("Creating new page with slug: {}", pageDTO.getSlug());
         
-        if (pageRepository.existsBySlug(pageDTO.getSlug())) {
+        if (pageRepository.existsBySlugAndCatalog(pageDTO.getSlug(), getStagedCatalog())) {
             throw new DuplicateResourceException("Page", "slug", pageDTO.getSlug());
         }
 
@@ -64,6 +77,7 @@ public class PageManagementService {
                 .ogDescription(pageDTO.getOgDescription())
                 .ogImage(pageDTO.getOgImage())
                 .build();
+        page.setCatalog(getStagedCatalog());
 
         Page savedPage = pageRepository.save(page);
         log.info("Page created successfully with ID: {}", savedPage.getId());
@@ -81,7 +95,7 @@ public class PageManagementService {
 
         // Check if slug is being changed and if new slug already exists
         if (!page.getSlug().equals(pageDTO.getSlug()) && 
-            pageRepository.existsBySlug(pageDTO.getSlug())) {
+            pageRepository.existsBySlugAndCatalog(pageDTO.getSlug(), getStagedCatalog())) {
             throw new DuplicateResourceException("Page", "slug", pageDTO.getSlug());
         }
 

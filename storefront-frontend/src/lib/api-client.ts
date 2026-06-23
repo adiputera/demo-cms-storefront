@@ -5,7 +5,10 @@ import type {
   ErrorResponse,
 } from '@/types';
 
-const STOREFRONT_API_URL = process.env.NEXT_PUBLIC_STOREFRONT_API_URL || 'http://localhost:8080/api';
+const isServer = typeof window === 'undefined';
+const STOREFRONT_API_URL = isServer
+  ? (process.env.STOREFRONT_API_URL_INTERNAL || 'http://storefront-backend:8080/api')
+  : (process.env.NEXT_PUBLIC_STOREFRONT_API_URL || 'http://localhost:8080/api');
 
 class ApiClient {
   private baseUrl: string;

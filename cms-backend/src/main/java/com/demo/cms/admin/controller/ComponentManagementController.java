@@ -55,10 +55,21 @@ public class ComponentManagementController {
 
     private final ComponentRepository componentRepository;
     private final SlotRepository slotRepository;
+    private final com.demo.cms.admin.repository.CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final ObjectMapper objectMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
     private final com.demo.cms.admin.service.ComponentSchemaService componentSchemaService;
+
+    private com.demo.cms.entity.Catalog getStagedCatalog() {
+        return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
+            .orElseGet(() -> {
+                com.demo.cms.entity.Catalog cat = new com.demo.cms.entity.Catalog();
+                cat.setCatalogId("contentCatalog");
+                cat.setVersion(com.demo.cms.entity.CatalogVersion.STAGED);
+                return catalogRepository.save(cat);
+            });
+    }
 
     @GetMapping
     public ResponseEntity<List<ComponentDTO>> getAllComponents() {
@@ -212,6 +223,7 @@ public class ComponentManagementController {
         component.setUid(request.getUid());
         component.setName(request.getName());
         component.setType(request.getType());
+        component.setCatalog(getStagedCatalog());
         
         return component;
     }

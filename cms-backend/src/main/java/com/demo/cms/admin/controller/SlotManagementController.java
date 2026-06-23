@@ -41,8 +41,19 @@ public class SlotManagementController {
 
     private final SlotRepository slotRepository;
     private final PageRepository pageRepository;
+    private final com.demo.cms.admin.repository.CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+
+    private com.demo.cms.entity.Catalog getStagedCatalog() {
+        return catalogRepository.findByCatalogIdAndVersion("contentCatalog", com.demo.cms.entity.CatalogVersion.STAGED)
+            .orElseGet(() -> {
+                com.demo.cms.entity.Catalog cat = new com.demo.cms.entity.Catalog();
+                cat.setCatalogId("contentCatalog");
+                cat.setVersion(com.demo.cms.entity.CatalogVersion.STAGED);
+                return catalogRepository.save(cat);
+            });
+    }
 
     @GetMapping("/page/{pageId}")
     public ResponseEntity<List<SlotResponse>> getSlotsByPage(@PathVariable Long pageId) {
@@ -71,6 +82,7 @@ public class SlotManagementController {
             .name(request.getName())
             .page(page)
             .build();
+        slot.setCatalog(getStagedCatalog());
 
         Slot savedSlot = slotRepository.save(slot);
         storefrontCacheEvictionService.evictStorefrontCaches();

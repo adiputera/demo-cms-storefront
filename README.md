@@ -1,9 +1,9 @@
 # Headless CMS Demo Application
 
-A full-stack Headless CMS demonstrating **runtime-driven page composition** with dynamic slots, components, and customizable templates.
+A full-stack, Catalog-Aware Headless CMS demonstrating **runtime-driven page composition** with dynamic slots, components, and customizable templates. Content changes are isolated in a **STAGED** catalog and can be pushed to an **ONLINE** catalog via an automated sync feature.
 
 > [!NOTE]
-> This is a **learning and demonstration project** showcasing advanced, schema-driven page composition architecture. Authentication, workflow approval, content synchronization, and content scheduling are omitted by design to focus on metadata schema mapping and flexible presentation flows.
+> This is a **learning and demonstration project** showcasing advanced, schema-driven page composition architecture. Authentication, workflow approval, and content scheduling are omitted by design to focus on metadata schema mapping and flexible presentation flows.
 
 ---
 
@@ -37,11 +37,12 @@ A full-stack Headless CMS demonstrating **runtime-driven page composition** with
 
 ### Key Design Highlights
 
-- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend (`/api/cms/components/types` and `/api/cms/components/types/{type}/schema`) and dynamically renders edit/creation input fields (strings, rich textareas, checkboxes, comma-separated lists). This completely eliminates hardcoded component form code in the frontend.
-- **Maintainable & Customizable Product Details**: Product detail pages (`/products/[code]`) are now mapped to a CMS page layout (using `/products/detail` or a product-specific slug like `/products/macbook-pro` as the template). This allows editors to place any components (banners, carousels, text blocks) around the product info, and the storefront binds the loaded product context down to child components (like the new `PRODUCT_DETAIL` component) at runtime.
+- **Multi-Version Catalog System (STAGED vs ONLINE)**: Content is isolated using a Catalog Aware schema. Editors work within a STAGED environment, ensuring work-in-progress content is invisible to customers. An automated, reflection-based deep copy synchronizes approved pages to the ONLINE storefront catalog.
+- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend via reflection (`@CmsComponent`) and dynamically renders input fields (strings, rich textareas, checkboxes, comma-separated lists). This completely eliminates hardcoded component form code in the frontend.
+- **Maintainable & Customizable Product Details**: Product detail pages (`/products/[code]`) are mapped to a CMS page layout (using `/products/detail` as the template). This allows editors to place any components (banners, carousels, text blocks) around the product info, and the storefront binds the loaded product context down to child components at runtime.
 - **Separate Read & Write Services**: 
-  - **Storefront Backend (8080)**: Fast read endpoints with aggressive Redis caching.
-  - **CMS Backend (8081)**: Write operations with automatic Redis cache eviction upon page/component mutations.
+  - **Storefront Backend (8080)**: Fast read endpoints with aggressive Redis caching, scoped strictly to the `ONLINE` catalog.
+  - **CMS Backend (8081)**: Write operations, scoped to the `STAGED` catalog, with automatic Redis cache eviction and publishing controls.
 
 ---
 
@@ -50,8 +51,9 @@ A full-stack Headless CMS demonstrating **runtime-driven page composition** with
 ### Backend
 - **Java 25** with **Spring Boot 4.0**
 - **Maven** multi-module project structure
-- **Spring Data JPA** with **Hibernate 7** (using `JOINED` subclass inheritance for polymorphic components)
-- **PostgreSQL 17** & **Redis 7**
+- **Spring Data JPA** with **Hibernate 7**
+- **Flyway** for database migration schema management
+- **PostgreSQL 16** & **Redis 7**
 
 ### Frontend
 - **Next.js 16.2.7** (Two independent services: `storefront-frontend` and `cms-frontend`)
@@ -63,76 +65,43 @@ A full-stack Headless CMS demonstrating **runtime-driven page composition** with
 
 ## 🚀 Quick Start & Running Locally
 
+The entire stack is containerized and managed via Docker Compose.
+
 ### Prerequisites
-- Docker (for database and cache containers)
-- Node.js 18+ & npm
-- Java 25 & Maven 3.9+
+- Docker & Docker Compose
+- Java 25 & Maven 3.9+ (if you wish to build the backend locally outside of Docker)
 
-### Step 1: Start Infrastructure
-Ensure PostgreSQL is running on port 5432 and Redis is running on port 6379:
+### Step 1: Build the Application
+You only need to build the backend Java binaries if you haven't yet, as the Dockerfile copies the built `.jar` files.
 ```bash
-# Start your existing PostgreSQL docker container
-docker start postgresql
-
-# Start or create the Redis container
-docker start cms-redis || docker run -d --name cms-redis -p 6379:6379 redis:7-alpine
+mvn clean package -DskipTests
 ```
 
-### Step 2: Set Database User Password
-Configure the database user role credentials:
+### Step 2: Start the Full Stack Environment
+Use Docker Compose to build the Node.js frontend images and start all 6 services (PostgreSQL, Redis, CMS Backend, Storefront Backend, CMS Frontend, Storefront Frontend).
+
 ```bash
-docker exec -t postgresql psql -U postgres -c "ALTER USER cms_user WITH PASSWORD 'cms_password';"
+docker compose up -d --build
 ```
+*Note: The frontend containers perform a multi-stage production build upon first run. This might take a few minutes.*
 
-### Step 3: Build & Install Modules
-Build the parent Maven project and install target `.jar` files locally:
-```bash
-mvn clean install -DskipTests
-```
-
-### Step 4: Run Backend Services
-
-* **Terminal 1 - CMS Backend (Port 8081)**:
-  ```bash
-  cd cms-backend
-  DATABASE_URL=jdbc:postgresql://localhost:5432/headless_cms DATABASE_USERNAME=cms_user DATABASE_PASSWORD=cms_password mvn spring-boot:run
-  ```
-
-* **Terminal 2 - Storefront Backend (Port 8080)**:
-  ```bash
-  cd storefront-backend
-  DATABASE_URL=jdbc:postgresql://localhost:5432/headless_cms DATABASE_USERNAME=cms_user DATABASE_PASSWORD=cms_password mvn spring-boot:run
-  ```
-
-### Step 5: Start Frontend Applications
-
-* **Terminal 3 - Storefront Frontend (Port 3000)**:
-  ```bash
-  cd storefront-frontend
-  npm run dev
-  ```
-
-* **Terminal 4 - CMS Admin Frontend (Port 3001)**:
-  ```bash
-  cd cms-frontend
-  npm run dev
-  ```
+### Step 3: Access the Applications
+- **CMS Admin UI**: [http://localhost:3001/cms](http://localhost:3001/cms)
+- **Storefront UI**: [http://localhost:3000](http://localhost:3000)
 
 ---
 
 ## 🔌 Core API Endpoints
 
 ### Storefront Read-Only API (Port 8080)
-- `GET /api/pages/{slug}`: Fetch page by slug (e.g. `index`, `about-us`).
-- `POST /api/slots/details`: Batch fetch slots and components.
-- `GET /api/products`: List all products.
+- `GET /api/pages/{slug}`: Fetch page by slug (e.g. `index`, `about-us`) from the ONLINE catalog.
 - `GET /api/products/{code}`: Fetch product by code (e.g. `macbook-pro`).
 
 ### CMS Administrative Write API (Port 8081)
-- `GET /api/cms/pages`: List all pages.
-- `POST /api/cms/pages`: Create a new page (e.g., `/hahaha`).
-- `GET /api/cms/components/types`: Get list of registered component types.
-- `GET /api/cms/components/types/{type}/schema`: Get field schema for a component type.
+- `GET /api/cms/pages`: List all STAGED pages.
+- `POST /api/cms/pages`: Create a new STAGED page.
+- `POST /api/sync/{catalogId}`: Deep copy and publish STAGED content to the ONLINE catalog.
+- `GET /api/cms/components/types`: Get list of registered, reflection-discovered component types.
 
 ---
 
@@ -149,6 +118,8 @@ mvn clean install -DskipTests
 
 ## 🔧 Verification & Testing
 
-1. **Verify Storefront Homepage**: Open [http://localhost:3000](http://localhost:3000).
-2. **Verify CMS Admin Page Management**: Open [http://localhost:3001/cms/pages](http://localhost:3001/cms/pages).
-3. **Verify Product Detail Page**: Open [http://localhost:3000/products/macbook-pro](http://localhost:3000/products/macbook-pro). Try editing the product detail template page at `/products/detail` in the CMS Admin panel and watch the storefront adapt instantly.
+1. **Open the CMS Dashboard**: Navigate to [http://localhost:3001/cms](http://localhost:3001/cms).
+2. **Create Content**: Add a new page, add a slot to that page, and drag a component into the slot.
+3. **Verify Staging Isolation**: Check the Storefront UI at `http://localhost:3000/{slug}`. The page should return a 404 since it has not been published yet.
+4. **Publish Content**: Return to the CMS Dashboard and click **Sync Staged to Online**.
+5. **Verify Live Storefront**: Refresh the Storefront UI; your newly composed layout will now be globally visible.
