@@ -39,7 +39,8 @@ A full-stack, Catalog-Aware Headless CMS demonstrating **runtime-driven page com
 
 - **Multi-Version Catalog System (STAGED vs ONLINE)**: Content is isolated using a Catalog Aware schema. Editors work within a STAGED environment, ensuring work-in-progress content is invisible to customers. An automated, reflection-based deep copy synchronizes approved pages to the ONLINE storefront catalog.
 - **Granular Sync Status Tracking**: All catalog-aware entities utilize a robust `syncVersion` strategy. The system intelligently computes and exposes `SYNCED`, `OUT_OF_SYNC`, and `NOT_SYNCED` statuses at runtime, allowing editors to selectively synchronize individual items or entire catalogs without relying on fragile timestamp comparisons.
-- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend via reflection (`@CmsComponent`) and dynamically renders input fields (strings, rich textareas, checkboxes, searchable product selectors). This completely eliminates hardcoded component form code in the frontend.
+- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend via reflection (`@CmsComponent`) and dynamically renders input fields (strings, rich textareas, checkboxes, searchable product selectors, and drag-and-drop image uploaders). This completely eliminates hardcoded component form code in the frontend.
+- **Zero-Proxy Shared Media Uploads**: Simplifies media management by utilizing Docker Shared Volumes. Images uploaded via the CMS are saved directly into a local volume mapped to the Next.js `public` directory, allowing them to be natively and instantly served as static assets without configuring an external CDN or reverse proxy.
 - **Maintainable & Customizable Product Details**: Product detail pages (`/products/[code]`) are mapped to a CMS page layout (using `/products/detail` as the template). This allows editors to place any components (banners, carousels, text blocks) around the product info, and the storefront binds the loaded product context down to child components at runtime.
 - **Separate Read & Write Services**: 
   - **Storefront Backend (8080)**: Fast read endpoints with aggressive Redis caching, scoped strictly to the `ONLINE` catalog.
@@ -104,6 +105,7 @@ docker compose up -d --build
 - `POST /api/sync/{catalogId}`: Deep copy and publish all STAGED content to the ONLINE catalog.
 - `POST /api/sync/item/{itemId}`: Granular, single-item synchronization from STAGED to ONLINE.
 - `GET /api/cms/components/types`: Get list of registered, reflection-discovered component types.
+- `POST /api/cms/media/upload`: Upload multipart files to the local shared volume.
 
 ---
 
