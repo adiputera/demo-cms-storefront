@@ -1,5 +1,7 @@
 import { cmsApiClient } from '@/lib/cms-api-client';
 import Link from 'next/link';
+import SyncButton from '../components/SyncButton';
+import StatusBadge from '../components/StatusBadge';
 
 export default async function ProductsListPage() {
   let products = [];
@@ -16,12 +18,15 @@ export default async function ProductsListPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-        <Link
-          href="/cms/products/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Create Product
-        </Link>
+        <div className="flex gap-4">
+          <SyncButton catalogId="productCatalog" />
+          <Link
+            href="/cms/products/new"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Product
+          </Link>
+        </div>
       </div>
 
       {error && (
@@ -40,7 +45,10 @@ export default async function ProductsListPage() {
       {products.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((product: any) => (
-            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+            <div key={product.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow relative">
+              <div className="absolute top-2 right-2 z-10">
+                <StatusBadge status={product.syncStatus} />
+              </div>
               {product.imageUrl && (
                 <div className="h-48 bg-gray-100 flex items-center justify-center">
                   <img

@@ -27,6 +27,7 @@ import com.demo.cms.entity.Catalog;
 import com.demo.cms.entity.CatalogAwareModel;
 import com.demo.cms.entity.CatalogVersion;
 import com.demo.cms.entity.SyncableEntity;
+import com.demo.cms.entity.Product;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
@@ -226,7 +227,12 @@ public class CatalogSyncService {
         }
 
         CatalogAwareRepository<T> repo = (CatalogAwareRepository<T>) repoOpt.get();
-        Catalog onlineCatalog = catalogRepository.findByCatalogIdAndVersion("contentCatalog", CatalogVersion.ONLINE)
+        String expectedCatalogId = "contentCatalog";
+        if (Product.class.isAssignableFrom(entityClass)) {
+            expectedCatalogId = "productCatalog";
+        }
+        
+        Catalog onlineCatalog = catalogRepository.findByCatalogIdAndVersion(expectedCatalogId, CatalogVersion.ONLINE)
                 .orElse(null);
 
         if (onlineCatalog == null) {

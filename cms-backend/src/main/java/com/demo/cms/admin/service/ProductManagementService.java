@@ -2,18 +2,21 @@ package com.demo.cms.admin.service;
 
 import com.demo.cms.dto.ProductDTO;
 import com.demo.cms.entity.Product;
+import com.demo.cms.entity.Catalog;
+import com.demo.cms.entity.CatalogVersion;
 import com.demo.cms.admin.repository.ProductRepository;
+import com.demo.cms.admin.repository.CatalogRepository;
 import com.demo.cms.admin.exception.ResourceNotFoundException;
 import com.demo.cms.admin.exception.DuplicateResourceException;
 import com.demo.cms.mapper.EntityMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Caching;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -22,17 +25,35 @@ import java.util.stream.Collectors;
 public class ProductManagementService {
 
     private final ProductRepository productRepository;
+    private final CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
-    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+    private final CatalogSyncService catalogSyncService;
 
-    @Transactional(readOnly = true)
-    public List<ProductDTO> getAllProducts() {
-        log.debug("Fetching all products");
-        List<Product> products = productRepository.findAll();
-        return entityMapper.toProductDTOList(products);
+    private Catalog getStagedCatalog() {
+        return catalogRepository.findByCatalogIdAndVersion("productCatalog", CatalogVersion.STAGED)
+                .orElseGet(() -> catalogRepository.save(Catalog.builder()
+                        .catalogId("productCatalog")
+                        .version(CatalogVersion.STAGED)
+                        .build()));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
+    public List<ProductDTO> getAllProducts() {
+        log.debug("Fetching all STAGED products");
+        Catalog stagedCatalog = getStagedCatalog();
+        List<Product> products = productRepository.findAllByCatalog(stagedCatalog, Pageable.unpaged()).getContent();
+        
+        Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(products, Product.class);
+        
+        return products.stream().map(product -> {
+            ProductDTO dto = entityMapper.toProductDTO(product);
+            dto.setSyncStatus(syncStatusMap.getOrDefault(product.getSyncKey(), "UNKNOWN"));
+            dto.setSyncVersion(product.getSyncVersion());
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
     public ProductDTO getProductById(Long id) {
         log.debug("Fetching product with ID: {}", id);
         Product product = productRepository.findById(id)
@@ -41,45 +62,38 @@ public class ProductManagementService {
     }
 
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "products", key = "'all'"),
-        @CacheEvict(value = "products", key = "#result.code")
-    })
     public ProductDTO createProduct(ProductDTO productDTO) {
         log.info("Creating new product with code: {}", productDTO.getCode());
+        Catalog stagedCatalog = getStagedCatalog();
         
-        if (productRepository.existsByCode(productDTO.getCode())) {
+        if (productRepository.existsByCodeAndCatalog(productDTO.getCode(), stagedCatalog)) {
             throw new DuplicateResourceException("Product", "code", productDTO.getCode());
         }
 
-        Product product = Product.builder()
-                .code(productDTO.getCode())
-                .name(productDTO.getName())
-                .imageUrl(productDTO.getImageUrl())
-                .price(productDTO.getPrice())
-                .description(productDTO.getDescription())
-                .build();
+        Product product = new Product();
+        product.setCode(productDTO.getCode());
+        product.setName(productDTO.getName());
+        product.setImageUrl(productDTO.getImageUrl());
+        product.setPrice(productDTO.getPrice());
+        product.setDescription(productDTO.getDescription());
+        product.setCatalog(stagedCatalog);
 
         Product savedProduct = productRepository.save(product);
         log.info("Product created successfully with ID: {}", savedProduct.getId());
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toProductDTO(savedProduct);
     }
 
     @Transactional
-    @Caching(evict = {
-        @CacheEvict(value = "products", key = "'all'"),
-        @CacheEvict(value = "products", key = "#productDTO.code")
-    })
     public ProductDTO updateProduct(Long id, ProductDTO productDTO) {
         log.info("Updating product with ID: {}", id);
+        Catalog stagedCatalog = getStagedCatalog();
         
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", id));
 
         // Check if code is being changed and if new code already exists
         if (!product.getCode().equals(productDTO.getCode()) && 
-            productRepository.existsByCode(productDTO.getCode())) {
+            productRepository.existsByCodeAndCatalog(productDTO.getCode(), stagedCatalog)) {
             throw new DuplicateResourceException("Product", "code", productDTO.getCode());
         }
 
@@ -91,12 +105,10 @@ public class ProductManagementService {
 
         Product updatedProduct = productRepository.save(product);
         log.info("Product updated successfully with ID: {}", updatedProduct.getId());
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toProductDTO(updatedProduct);
     }
 
     @Transactional
-    @CacheEvict(value = "products", allEntries = true)
     public void deleteProduct(Long id) {
         log.info("Deleting product with ID: {}", id);
         
@@ -105,7 +117,6 @@ public class ProductManagementService {
         }
 
         productRepository.deleteById(id);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Product deleted successfully with ID: {}", id);
     }
 }

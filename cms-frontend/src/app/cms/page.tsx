@@ -1,7 +1,5 @@
 import Link from 'next/link';
 import { cmsApiClient } from '@/lib/cms-api-client';
-import SyncButton from './components/SyncButton';
-
 export default async function CMSDashboard() {
   let stats = { totalPages: 0, totalProducts: 0, totalComponents: 0 };
   try {
@@ -17,7 +15,6 @@ export default async function CMSDashboard() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900 font-sans">CMS Dashboard</h1>
-        <SyncButton />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

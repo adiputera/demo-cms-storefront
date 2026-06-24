@@ -183,7 +183,8 @@ CREATE TABLE product_detail_components (
 -- =====================================================
 CREATE TABLE products (
     id BIGSERIAL PRIMARY KEY,
-    code VARCHAR(100) NOT NULL UNIQUE,
+    catalog_id BIGINT NOT NULL,
+    code VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     image_url VARCHAR(500),
     price DECIMAL(10, 2) NOT NULL,
@@ -191,7 +192,11 @@ CREATE TABLE products (
     
     -- Audit Fields
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INTEGER NOT NULL DEFAULT 1,
+    
+    CONSTRAINT fk_products_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
+    CONSTRAINT uk_products_code_catalog UNIQUE (code, catalog_id)
 );
 
 CREATE INDEX idx_products_code ON products(code);

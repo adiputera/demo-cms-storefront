@@ -322,6 +322,26 @@ class CMSApiClient {
     }
     return response.json();
   }
+
+  // Media Upload
+  async uploadMedia(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await fetch(`${this.baseUrl}/media/upload`, {
+      method: 'POST',
+      body: formData,
+      // Do NOT set Content-Type header manually here. fetch will set it correctly with the boundary string for FormData
+      cache: 'no-store',
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.error || error.message || 'Failed to upload media');
+    }
+    
+    return response.json(); // { url: '/uploads/...' }
+  }
 }
 
 export const cmsApiClient = new CMSApiClient(CMS_API_URL);

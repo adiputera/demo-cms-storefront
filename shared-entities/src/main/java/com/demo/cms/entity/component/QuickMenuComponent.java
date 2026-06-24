@@ -35,7 +35,7 @@ public class QuickMenuComponent extends Component {
     @NotBlank(message = "Image URL is required")
     @Size(max = 500)
     @Column(name = "image_url", nullable = false)
-    @CmsField(displayName = "Image URL", type = "string", required = true, placeholder = "https://images.unsplash.com/...")
+    @CmsField(displayName = "Image URL", type = "image", required = true, placeholder = "https://images.unsplash.com/...")
     private String imageUrl;
 
     @NotBlank(message = "URL is required")

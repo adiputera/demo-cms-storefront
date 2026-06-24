@@ -13,4 +13,5 @@ import com.demo.cms.entity.CatalogAwareModel;
 @NoRepositoryBean
 public interface CatalogAwareRepository<T extends CatalogAwareModel> extends JpaRepository<T, Long> {
     Page<T> findAllByCatalog(Catalog catalog, Pageable pageable);
+    long countByCatalog(Catalog catalog);
 }

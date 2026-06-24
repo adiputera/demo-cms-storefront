@@ -39,7 +39,7 @@ public class PageManagementService {
             });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PageDTO> getAllPages() {
         log.debug("Fetching all pages");
         List<Page> pages = pageRepository.findAllByCatalog(getStagedCatalog());
@@ -55,7 +55,7 @@ public class PageManagementService {
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PageDTO getPageById(Long id) {
         log.debug("Fetching page with ID: {}", id);
         Page page = pageRepository.findById(id)
@@ -84,8 +84,8 @@ public class PageManagementService {
                 .metaDescription(pageDTO.getMetaDescription())
                 .metaKeywords(pageDTO.getMetaKeywords())
                 .canonicalUrl(pageDTO.getCanonicalUrl())
-                .robotsIndex(pageDTO.getRobotsIndex())
-                .robotsFollow(pageDTO.getRobotsFollow())
+                .robotsIndex(pageDTO.getRobotsIndex() != null ? pageDTO.getRobotsIndex() : true)
+                .robotsFollow(pageDTO.getRobotsFollow() != null ? pageDTO.getRobotsFollow() : true)
                 .ogTitle(pageDTO.getOgTitle())
                 .ogDescription(pageDTO.getOgDescription())
                 .ogImage(pageDTO.getOgImage())
@@ -119,8 +119,8 @@ public class PageManagementService {
         page.setMetaDescription(pageDTO.getMetaDescription());
         page.setMetaKeywords(pageDTO.getMetaKeywords());
         page.setCanonicalUrl(pageDTO.getCanonicalUrl());
-        page.setRobotsIndex(pageDTO.getRobotsIndex());
-        page.setRobotsFollow(pageDTO.getRobotsFollow());
+        page.setRobotsIndex(pageDTO.getRobotsIndex() != null ? pageDTO.getRobotsIndex() : true);
+        page.setRobotsFollow(pageDTO.getRobotsFollow() != null ? pageDTO.getRobotsFollow() : true);
         page.setOgTitle(pageDTO.getOgTitle());
         page.setOgDescription(pageDTO.getOgDescription());
         page.setOgImage(pageDTO.getOgImage());

@@ -1,17 +1,12 @@
 package com.demo.cms.entity;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -23,23 +18,24 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "products", indexes = {
-    @Index(name = "idx_products_code", columnList = "code", unique = true)
-})
+@Table(name = "products", 
+    indexes = {
+        @Index(name = "idx_products_code", columnList = "code")
+    },
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"code", "catalog_id"})
+    }
+)
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Product extends CatalogAwareModel {
 
     @NotBlank(message = "Product code is required")
     @Size(max = 100)
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String code;
 
     @NotBlank(message = "Product name is required")
@@ -59,21 +55,8 @@ public class Product {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    // Audit Fields
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+    @Override
+    public String getSyncKey() {
+        return this.code;
     }
 }

@@ -30,4 +30,6 @@ public class ProductDTO {
     private BigDecimal price;
 
     private String description;
+    private String syncStatus;
+    private Integer syncVersion;
 }

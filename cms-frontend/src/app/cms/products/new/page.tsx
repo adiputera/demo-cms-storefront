@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cmsApiClient } from '@/lib/cms-api-client';
 
+import ImageUploader from '@/components/ImageUploader';
+
 export default function NewProductForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -104,17 +106,15 @@ export default function NewProductForm() {
 
         <div>
           <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-            Image URL
+            Product Image
           </label>
-          <input
-            type="url"
-            id="imageUrl"
-            name="imageUrl"
-            value={formData.imageUrl}
-            onChange={handleChange}
-            placeholder="https://images.unsplash.com/photo-..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <div className="mt-1">
+            <ImageUploader
+              value={formData.imageUrl}
+              onChange={(url) => setFormData(prev => ({ ...prev, imageUrl: url }))}
+              placeholder="https://images.unsplash.com/..."
+            />
+          </div>
         </div>
 
         <div>

@@ -31,7 +31,7 @@ public class ProductCarouselComponent extends Component {
     private String title;
 
     @Column(name = "product_codes", columnDefinition = "TEXT")
-    @CmsField(displayName = "Product Codes (comma-separated)", type = "array_string", required = true, placeholder = "macbook-pro, iphone-15-pro")
+    @CmsField(displayName = "Products", type = "multiple_products", required = true, placeholder = "Select products...")
     private String productCodes; // Comma-separated list of product codes
 
     @Override

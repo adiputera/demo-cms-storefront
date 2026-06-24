@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { cmsApiClient } from '@/lib/cms-api-client';
 import { useRouter } from 'next/navigation';
 
-export default function SyncButton() {
+export default function SyncButton({ catalogId = 'contentCatalog' }: { catalogId?: string }) {
   const [isSyncing, setIsSyncing] = useState(false);
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const router = useRouter();
@@ -13,7 +13,7 @@ export default function SyncButton() {
     setIsSyncing(true);
     setMessage(null);
     try {
-      await cmsApiClient.syncCatalog('contentCatalog');
+      await cmsApiClient.syncCatalog(catalogId);
       setMessage({ text: 'Successfully synced STAGED catalog to ONLINE!', type: 'success' });
       router.refresh();
     } catch (error: any) {

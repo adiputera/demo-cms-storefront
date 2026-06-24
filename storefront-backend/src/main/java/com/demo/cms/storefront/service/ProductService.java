@@ -25,8 +25,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
         log.debug("Fetching all products");
-
-        List<Product> products = productRepository.findAll();
+        List<Product> products = productRepository.findAllOnline();
         return entityMapper.toProductDTOList(products);
     }
 
@@ -34,10 +33,8 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductDTO getProductByCode(String code) {
         log.debug("Fetching product with code: {}", code);
-
         Product product = productRepository.findByCode(code)
                 .orElseThrow(() -> new ResourceNotFoundException("Product", code));
-
         return entityMapper.toProductDTO(product);
     }
 
@@ -48,7 +45,7 @@ public class ProductService {
         if (codes == null || codes.isEmpty()) {
             return List.of();
         }
-
+        
         List<Product> products = productRepository.findByCodeIn(codes);
         return entityMapper.toProductDTOList(products);
     }

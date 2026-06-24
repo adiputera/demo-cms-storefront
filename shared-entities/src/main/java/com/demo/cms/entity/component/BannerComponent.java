@@ -27,7 +27,7 @@ public class BannerComponent extends Component {
 
     @Size(max = 500)
     @Column(name = "image_url")
-    @CmsField(displayName = "Image URL", type = "string", required = true, placeholder = "https://images.unsplash.com/...")
+    @CmsField(displayName = "Image URL", type = "image", required = true, placeholder = "https://images.unsplash.com/...")
     private String imageUrl;
 
     @Size(max = 255)

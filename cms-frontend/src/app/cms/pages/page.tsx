@@ -1,6 +1,7 @@
 import { cmsApiClient } from '@/lib/cms-api-client';
 import Link from 'next/link';
 import SyncSingleItemButton from '../components/SyncSingleItemButton';
+import SyncButton from '../components/SyncButton';
 
 export default async function PagesListPage() {
   let pages = [];
@@ -17,12 +18,15 @@ export default async function PagesListPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Pages</h1>
-        <Link
-          href="/cms/pages/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          Create Page
-        </Link>
+        <div className="flex gap-4">
+          <SyncButton catalogId="contentCatalog" />
+          <Link
+            href="/cms/pages/new"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Create Page
+          </Link>
+        </div>
       </div>
 
       {error && (

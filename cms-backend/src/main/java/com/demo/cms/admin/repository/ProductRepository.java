@@ -2,15 +2,15 @@ package com.demo.cms.admin.repository;
 
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import com.demo.cms.entity.Catalog;
 import com.demo.cms.entity.Product;
 
 @Repository
-public interface ProductRepository extends JpaRepository<Product, Long> {
+public interface ProductRepository extends CatalogAwareRepository<Product> {
     
-    Optional<Product> findByCode(String code);
+    Optional<Product> findByCodeAndCatalog(String code, Catalog catalog);
     
-    boolean existsByCode(String code);
+    boolean existsByCodeAndCatalog(String code, Catalog catalog);
 }
