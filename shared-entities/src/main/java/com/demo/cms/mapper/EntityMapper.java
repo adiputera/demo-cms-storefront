@@ -110,6 +110,7 @@ public class EntityMapper {
             case NAVIGATION -> toNavigationComponentDTO((NavigationComponent) component);
             case QUICK_MENU -> toQuickMenuComponentDTO((QuickMenuComponent) component);
             case PRODUCT_DETAIL -> toProductDetailComponentDTO((ProductDetailComponent) component);
+            case LATEST_ARTICLE -> toLatestArticleComponentDTO((LatestArticleComponent) component);
         };
     }
 
@@ -187,6 +188,17 @@ public class EntityMapper {
                 .title(component.getTitle())
                 .showPrice(component.getShowPrice())
                 .showDescription(component.getShowDescription())
+                .build();
+    }
+
+    private LatestArticleComponentDTO toLatestArticleComponentDTO(LatestArticleComponent component) {
+        return LatestArticleComponentDTO.builder()
+                .id(component.getId())
+                .uid(component.getUid())
+                .name(component.getName())
+                .type(component.getType().name())
+                .title(component.getTitle())
+                .articleCount(component.getArticleCount())
                 .build();
     }
 

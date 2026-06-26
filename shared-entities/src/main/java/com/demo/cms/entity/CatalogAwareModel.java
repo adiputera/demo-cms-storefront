@@ -46,10 +46,12 @@ public abstract class CatalogAwareModel implements SyncableEntity {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        if (syncVersion == null) {
-            syncVersion = 1;
-        } else {
-            syncVersion++;
+        if (catalog == null || catalog.getVersion() == CatalogVersion.STAGED) {
+            if (syncVersion == null) {
+                syncVersion = 1;
+            } else {
+                syncVersion++;
+            }
         }
     }
 }

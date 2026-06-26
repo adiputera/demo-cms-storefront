@@ -6,5 +6,6 @@ public enum ComponentType {
     PRODUCT_CAROUSEL,
     NAVIGATION,
     QUICK_MENU,
-    PRODUCT_DETAIL
+    PRODUCT_DETAIL,
+    LATEST_ARTICLE
 }

@@ -23,7 +23,8 @@ import lombok.NoArgsConstructor;
     @JsonSubTypes.Type(value = CreateProductCarouselComponentRequest.class, name = "PRODUCT_CAROUSEL"),
     @JsonSubTypes.Type(value = CreateNavigationComponentRequest.class, name = "NAVIGATION"),
     @JsonSubTypes.Type(value = CreateQuickMenuComponentRequest.class, name = "QUICK_MENU"),
-    @JsonSubTypes.Type(value = CreateProductDetailComponentRequest.class, name = "PRODUCT_DETAIL")
+    @JsonSubTypes.Type(value = CreateProductDetailComponentRequest.class, name = "PRODUCT_DETAIL"),
+    @JsonSubTypes.Type(value = CreateLatestArticleComponentRequest.class, name = "LATEST_ARTICLE")
 })
 public abstract class CreateComponentRequest {
     
@@ -43,57 +44,4 @@ public abstract class CreateComponentRequest {
     private Long slotId;
 }
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateBannerComponentRequest extends CreateComponentRequest {
-    private String imageUrl;
-    private String altText;
-    private String title;
-    private String subtitle;
-    private String ctaText;
-    private String ctaUrl;
-}
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateParagraphComponentRequest extends CreateComponentRequest {
-    private String title;
-    private String content;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateProductCarouselComponentRequest extends CreateComponentRequest {
-    private String title;
-    private List<String> productCodes;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateNavigationComponentRequest extends CreateComponentRequest {
-    private String displayText;
-    private String url;
-    private String icon;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateQuickMenuComponentRequest extends CreateComponentRequest {
-    private String title;
-    private String imageUrl;
-    private String url;
-}
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-class CreateProductDetailComponentRequest extends CreateComponentRequest {
-    private String title;
-    private Boolean showPrice;
-    private Boolean showDescription;
-}

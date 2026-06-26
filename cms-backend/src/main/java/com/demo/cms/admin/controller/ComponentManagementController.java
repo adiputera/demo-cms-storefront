@@ -3,7 +3,7 @@ package com.demo.cms.admin.controller;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.cache.annotation.CacheEvict;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +22,19 @@ import com.demo.cms.admin.dto.ComponentField;
 import com.demo.cms.admin.dto.ComponentSchema;
 import com.demo.cms.admin.dto.ComponentTypeInfo;
 import com.demo.cms.admin.dto.CreateComponentRequest;
+import com.demo.cms.admin.dto.CreateLatestArticleComponentRequest;
+import com.demo.cms.admin.dto.CreateBannerComponentRequest;
+import com.demo.cms.admin.dto.CreateParagraphComponentRequest;
+import com.demo.cms.admin.dto.CreateProductCarouselComponentRequest;
+import com.demo.cms.admin.dto.CreateNavigationComponentRequest;
+import com.demo.cms.admin.dto.CreateQuickMenuComponentRequest;
+import com.demo.cms.admin.dto.CreateProductDetailComponentRequest;
 import com.demo.cms.admin.dto.ReorderComponentRequest;
 import com.demo.cms.admin.exception.BadRequestException;
 import com.demo.cms.admin.exception.ResourceNotFoundException;
 import com.demo.cms.admin.repository.ComponentRepository;
 import com.demo.cms.admin.repository.SlotRepository;
-import com.demo.cms.admin.service.StorefrontCacheEvictionService;
+
 import com.demo.cms.dto.ComponentDTO;
 import com.demo.cms.entity.Component;
 import com.demo.cms.entity.Slot;
@@ -36,9 +43,9 @@ import com.demo.cms.entity.component.NavigationComponent;
 import com.demo.cms.entity.component.ParagraphComponent;
 import com.demo.cms.entity.component.ProductCarouselComponent;
 import com.demo.cms.entity.component.QuickMenuComponent;
+import com.demo.cms.entity.component.LatestArticleComponent;
 import com.demo.cms.entity.component.ProductDetailComponent;
 import com.demo.cms.mapper.EntityMapper;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -58,7 +65,7 @@ public class ComponentManagementController {
     private final com.demo.cms.admin.repository.CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
     private final ObjectMapper objectMapper;
-    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+
     private final com.demo.cms.admin.service.ComponentSchemaService componentSchemaService;
     private final com.demo.cms.admin.service.CatalogSyncService catalogSyncService;
 
@@ -87,7 +94,6 @@ public class ComponentManagementController {
 
     @PostMapping
     @Transactional
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<ComponentDTO> createComponent(@Valid @RequestBody CreateComponentRequest request) {
         if (request.getSlotId() == null) {
             throw new BadRequestException("Slot ID is required to create a component");
@@ -107,13 +113,11 @@ public class ComponentManagementController {
         ComponentDTO dto = entityMapper.toComponentDTO(savedComponent);
         dto.setSyncStatus(syncStatusMap.getOrDefault(savedComponent.getSyncKey(), "UNKNOWN"));
         
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.status(HttpStatus.CREATED).body(dto);
     }
 
     @PostMapping("/slots/{slotId}/components/{componentId}")
     @Transactional
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<Void> linkComponent(@PathVariable Long slotId, @PathVariable Long componentId, @RequestBody Map<String, Integer> payload) {
         Slot slot = slotRepository.findById(slotId)
             .orElseThrow(() -> new ResourceNotFoundException("Slot not found with id: " + slotId));
@@ -128,13 +132,11 @@ public class ComponentManagementController {
             slot.getComponents().add(index, component);
             slotRepository.save(slot);
         }
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
     @Transactional
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<ComponentDTO> updateComponent(
             @PathVariable Long id,
             @Valid @RequestBody CreateComponentRequest request) {
@@ -153,13 +155,11 @@ public class ComponentManagementController {
         ComponentDTO dto = entityMapper.toComponentDTO(updated);
         dto.setSyncStatus(syncStatusMap.getOrDefault(updated.getSyncKey(), "UNKNOWN"));
         
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.ok(dto);
     }
 
     @PutMapping("/slots/{slotId}/components/{id}/reorder")
     @Transactional
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<Void> reorderComponent(
             @PathVariable Long slotId,
             @PathVariable Long id,
@@ -176,13 +176,11 @@ public class ComponentManagementController {
             slot.getComponents().add(newIndex, component);
             slotRepository.save(slot);
         }
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/slots/{slotId}/components/{id}")
     @Transactional
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<Void> removeComponentFromSlot(@PathVariable Long slotId, @PathVariable Long id) {
         Slot slot = slotRepository.findById(slotId)
             .orElseThrow(() -> new ResourceNotFoundException("Slot not found with id: " + slotId));
@@ -192,18 +190,15 @@ public class ComponentManagementController {
         if (slot.getComponents().remove(component)) {
             slotRepository.save(slot);
         }
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<Void> deleteComponent(@PathVariable Long id) {
         if (!componentRepository.existsById(id)) {
             throw new ResourceNotFoundException("Component not found with id: " + id);
         }
         componentRepository.deleteById(id);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 
@@ -229,6 +224,9 @@ public class ComponentManagementController {
             case "PRODUCT_DETAIL":
                 component = createProductDetailComponent(request);
                 break;
+            case "LATEST_ARTICLE":
+                component = createLatestArticleComponent(request);
+                break;
             default:
                 throw new BadRequestException("Unknown component type: " + request.getType());
         }
@@ -245,140 +243,131 @@ public class ComponentManagementController {
         existing.setUid(request.getUid());
         existing.setName(request.getName());
         
-        // Update type-specific fields
-        Map<String, Object> requestMap = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
-        
-        if (existing instanceof BannerComponent) {
-            updateBannerComponent((BannerComponent) existing, requestMap);
-        } else if (existing instanceof ParagraphComponent) {
-            updateParagraphComponent((ParagraphComponent) existing, requestMap);
-        } else if (existing instanceof ProductCarouselComponent) {
-            updateProductCarouselComponent((ProductCarouselComponent) existing, requestMap);
-        } else if (existing instanceof NavigationComponent) {
-            updateNavigationComponent((NavigationComponent) existing, requestMap);
-        } else if (existing instanceof QuickMenuComponent) {
-            updateQuickMenuComponent((QuickMenuComponent) existing, requestMap);
-        } else if (existing instanceof ProductDetailComponent) {
-            updateProductDetailComponent((ProductDetailComponent) existing, requestMap);
+        if (existing instanceof BannerComponent banner && request instanceof CreateBannerComponentRequest req) {
+            updateBannerComponent(banner, req);
+        } else if (existing instanceof ParagraphComponent paragraph && request instanceof CreateParagraphComponentRequest req) {
+            updateParagraphComponent(paragraph, req);
+        } else if (existing instanceof ProductCarouselComponent carousel && request instanceof CreateProductCarouselComponentRequest req) {
+            updateProductCarouselComponent(carousel, req);
+        } else if (existing instanceof NavigationComponent nav && request instanceof CreateNavigationComponentRequest req) {
+            updateNavigationComponent(nav, req);
+        } else if (existing instanceof QuickMenuComponent menu && request instanceof CreateQuickMenuComponentRequest req) {
+            updateQuickMenuComponent(menu, req);
+        } else if (existing instanceof ProductDetailComponent detail && request instanceof CreateProductDetailComponentRequest req) {
+            updateProductDetailComponent(detail, req);
+        } else if (existing instanceof LatestArticleComponent latestArticle) {
+            updateLatestArticleComponent(latestArticle, request);
         }
     }
 
     private BannerComponent createBannerComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateBannerComponentRequest req = (CreateBannerComponentRequest) request;
         BannerComponent banner = new BannerComponent();
-        banner.setImageUrl(getStringOrNull(map, "imageUrl"));
-        banner.setAltText(getStringOrNull(map, "altText"));
-        banner.setTitle(getStringOrNull(map, "title"));
-        banner.setSubtitle(getStringOrNull(map, "subtitle"));
-        banner.setCtaText(getStringOrNull(map, "ctaText"));
-        banner.setCtaUrl(getStringOrNull(map, "ctaUrl"));
+        banner.setImageUrl(req.getImageUrl());
+        banner.setAltText(req.getAltText());
+        banner.setTitle(req.getTitle());
+        banner.setSubtitle(req.getSubtitle());
+        banner.setCtaText(req.getCtaText());
+        banner.setCtaUrl(req.getCtaUrl());
         return banner;
     }
 
-    private void updateBannerComponent(BannerComponent banner, Map<String, Object> map) {
-        banner.setImageUrl(getStringOrNull(map, "imageUrl"));
-        banner.setAltText(getStringOrNull(map, "altText"));
-        banner.setTitle(getStringOrNull(map, "title"));
-        banner.setSubtitle(getStringOrNull(map, "subtitle"));
-        banner.setCtaText(getStringOrNull(map, "ctaText"));
-        banner.setCtaUrl(getStringOrNull(map, "ctaUrl"));
+    private void updateBannerComponent(BannerComponent banner, CreateBannerComponentRequest req) {
+        banner.setImageUrl(req.getImageUrl());
+        banner.setAltText(req.getAltText());
+        banner.setTitle(req.getTitle());
+        banner.setSubtitle(req.getSubtitle());
+        banner.setCtaText(req.getCtaText());
+        banner.setCtaUrl(req.getCtaUrl());
     }
 
     private ParagraphComponent createParagraphComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateParagraphComponentRequest req = (CreateParagraphComponentRequest) request;
         ParagraphComponent paragraph = new ParagraphComponent();
-        paragraph.setTitle(getStringOrNull(map, "title"));
-        paragraph.setContent(getStringOrNull(map, "content"));
+        paragraph.setTitle(req.getTitle());
+        paragraph.setContent(req.getContent());
         return paragraph;
     }
 
-    private void updateParagraphComponent(ParagraphComponent paragraph, Map<String, Object> map) {
-        paragraph.setTitle(getStringOrNull(map, "title"));
-        paragraph.setContent(getStringOrNull(map, "content"));
+    private void updateParagraphComponent(ParagraphComponent paragraph, CreateParagraphComponentRequest req) {
+        paragraph.setTitle(req.getTitle());
+        paragraph.setContent(req.getContent());
     }
 
     private ProductCarouselComponent createProductCarouselComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateProductCarouselComponentRequest req = (CreateProductCarouselComponentRequest) request;
         ProductCarouselComponent carousel = new ProductCarouselComponent();
-        carousel.setTitle(getStringOrNull(map, "title"));
-        
-        @SuppressWarnings("unchecked")
-        List<String> codes = (List<String>) map.get("productCodes");
-        if (codes != null) {
-            carousel.setProductCodes(String.join(",", codes));
+        carousel.setTitle(req.getTitle());
+        if (req.getProductCodes() != null) {
+            carousel.setProductCodes(String.join(",", req.getProductCodes()));
         }
         return carousel;
     }
 
-    private void updateProductCarouselComponent(ProductCarouselComponent carousel, Map<String, Object> map) {
-        carousel.setTitle(getStringOrNull(map, "title"));
-        
-        @SuppressWarnings("unchecked")
-        List<String> codes = (List<String>) map.get("productCodes");
-        if (codes != null) {
-            carousel.setProductCodes(String.join(",", codes));
+    private void updateProductCarouselComponent(ProductCarouselComponent carousel, CreateProductCarouselComponentRequest req) {
+        carousel.setTitle(req.getTitle());
+        if (req.getProductCodes() != null) {
+            carousel.setProductCodes(String.join(",", req.getProductCodes()));
         }
     }
 
     private NavigationComponent createNavigationComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateNavigationComponentRequest req = (CreateNavigationComponentRequest) request;
         NavigationComponent nav = new NavigationComponent();
-        nav.setDisplayText(getStringOrNull(map, "displayText"));
-        nav.setUrl(getStringOrNull(map, "url"));
-        nav.setIcon(getStringOrNull(map, "icon"));
+        nav.setDisplayText(req.getDisplayText());
+        nav.setUrl(req.getUrl());
+        nav.setIcon(req.getIcon());
         return nav;
     }
 
-    private void updateNavigationComponent(NavigationComponent nav, Map<String, Object> map) {
-        nav.setDisplayText(getStringOrNull(map, "displayText"));
-        nav.setUrl(getStringOrNull(map, "url"));
-        nav.setIcon(getStringOrNull(map, "icon"));
+    private void updateNavigationComponent(NavigationComponent nav, CreateNavigationComponentRequest req) {
+        nav.setDisplayText(req.getDisplayText());
+        nav.setUrl(req.getUrl());
+        nav.setIcon(req.getIcon());
     }
 
     private QuickMenuComponent createQuickMenuComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateQuickMenuComponentRequest req = (CreateQuickMenuComponentRequest) request;
         QuickMenuComponent menu = new QuickMenuComponent();
-        menu.setTitle(getStringOrNull(map, "title"));
-        menu.setImageUrl(getStringOrNull(map, "imageUrl"));
-        menu.setUrl(getStringOrNull(map, "url"));
+        menu.setTitle(req.getTitle());
+        menu.setImageUrl(req.getImageUrl());
+        menu.setUrl(req.getUrl());
         return menu;
     }
 
-    private void updateQuickMenuComponent(QuickMenuComponent menu, Map<String, Object> map) {
-        menu.setTitle(getStringOrNull(map, "title"));
-        menu.setImageUrl(getStringOrNull(map, "imageUrl"));
-        menu.setUrl(getStringOrNull(map, "url"));
-    }
-
-    private String getStringOrNull(Map<String, Object> map, String key) {
-        Object value = map.get(key);
-        return value != null ? value.toString() : null;
+    private void updateQuickMenuComponent(QuickMenuComponent menu, CreateQuickMenuComponentRequest req) {
+        menu.setTitle(req.getTitle());
+        menu.setImageUrl(req.getImageUrl());
+        menu.setUrl(req.getUrl());
     }
 
     private ProductDetailComponent createProductDetailComponent(CreateComponentRequest request) {
-        Map<String, Object> map = objectMapper.convertValue(request, new TypeReference<Map<String, Object>>() {});
+        CreateProductDetailComponentRequest req = (CreateProductDetailComponentRequest) request;
         ProductDetailComponent detail = new ProductDetailComponent();
-        detail.setTitle(getStringOrNull(map, "title"));
-        detail.setShowPrice(getBooleanOrDefault(map, "showPrice", true));
-        detail.setShowDescription(getBooleanOrDefault(map, "showDescription", true));
+        detail.setTitle(req.getTitle());
+        detail.setShowPrice(req.getShowPrice() != null ? req.getShowPrice() : true);
+        detail.setShowDescription(req.getShowDescription() != null ? req.getShowDescription() : true);
         return detail;
     }
 
-    private void updateProductDetailComponent(ProductDetailComponent detail, Map<String, Object> map) {
-        detail.setTitle(getStringOrNull(map, "title"));
-        detail.setShowPrice(getBooleanOrDefault(map, "showPrice", true));
-        detail.setShowDescription(getBooleanOrDefault(map, "showDescription", true));
+    private void updateProductDetailComponent(ProductDetailComponent detail, CreateProductDetailComponentRequest req) {
+        detail.setTitle(req.getTitle());
+        detail.setShowPrice(req.getShowPrice() != null ? req.getShowPrice() : true);
+        detail.setShowDescription(req.getShowDescription() != null ? req.getShowDescription() : true);
     }
 
-    private Boolean getBooleanOrDefault(Map<String, Object> map, String key, boolean defaultValue) {
-        Object value = map.get(key);
-        if (value == null) {
-            return defaultValue;
-        }
-        if (value instanceof Boolean) {
-            return (Boolean) value;
-        }
-        return Boolean.parseBoolean(value.toString());
+    private LatestArticleComponent createLatestArticleComponent(CreateComponentRequest request) {
+        CreateLatestArticleComponentRequest req = objectMapper.convertValue(request, CreateLatestArticleComponentRequest.class);
+        return LatestArticleComponent.builder()
+                .title(req.getTitle())
+                .articleCount(req.getArticleCount())
+                .build();
+    }
+
+    private void updateLatestArticleComponent(LatestArticleComponent component, CreateComponentRequest request) {
+        CreateLatestArticleComponentRequest req = objectMapper.convertValue(request, CreateLatestArticleComponentRequest.class);
+        if (req.getTitle() != null) component.setTitle(req.getTitle());
+        if (req.getArticleCount() != null) component.setArticleCount(req.getArticleCount());
     }
 
     @GetMapping("/types")

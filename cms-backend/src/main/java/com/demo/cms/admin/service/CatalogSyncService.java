@@ -19,7 +19,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.support.Repositories;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.demo.cms.admin.repository.CatalogAwareRepository;
 import com.demo.cms.admin.repository.CatalogRepository;
@@ -45,13 +47,17 @@ public class CatalogSyncService {
     private final CatalogRepository catalogRepository;
     private final EntityManager entityManager;
     private final ApplicationContext applicationContext;
+    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
+    private final PlatformTransactionManager transactionManager;
 
     private Repositories repositories;
+    private TransactionTemplate transactionTemplate;
     private List<Class<? extends CatalogAwareModel>> sortedEntityClasses = new ArrayList<>();
 
     @PostConstruct
     public void init() {
         this.repositories = new Repositories(applicationContext);
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
         buildTopologicalSort();
     }
 
@@ -136,7 +142,6 @@ public class CatalogSyncService {
         log.info("Catalog Sync Entity Order Resolved: {}", sortedEntityClasses.stream().map(Class::getSimpleName).toList());
     }
 
-    @Transactional
     public void syncCatalog(String catalogId) {
         log.info("Starting universal sync for catalog: {}", catalogId);
 
@@ -156,6 +161,7 @@ public class CatalogSyncService {
             syncEntityClass(entityClass, stagedCatalog, onlineCatalog, syncedCache);
         }
 
+        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Universal catalog sync completed successfully for: {}", catalogId);
     }
 
@@ -211,6 +217,7 @@ public class CatalogSyncService {
         resolveRelationships(stagedEntity, onlineEntity, targetClass, syncedCache, onlineCatalog);
 
         repo.save(onlineEntity);
+        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Single item sync completed for {} with ID: {}", entityType, itemId);
     }
 
@@ -252,7 +259,7 @@ public class CatalogSyncService {
             T online = onlineMap.get(staged.getSyncKey());
             if (online == null) {
                 statusMap.put(staged.getSyncKey(), "NOT_SYNCED");
-            } else if (staged.getSyncVersion() > online.getSyncVersion()) {
+            } else if (!staged.getSyncVersion().equals(online.getSyncVersion())) {
                 statusMap.put(staged.getSyncKey(), "OUT_OF_SYNC");
             } else {
                 statusMap.put(staged.getSyncKey(), "SYNCED");
@@ -279,46 +286,58 @@ public class CatalogSyncService {
 
         int page = 0;
         int batchSize = 500;
-        org.springframework.data.domain.Page<T> stagedBatch;
+        boolean hasNext;
+        long totalSynced = 0;
 
         do {
-            Pageable pageable = PageRequest.of(page, batchSize);
-            stagedBatch = repo.findAllByCatalog(stagedCatalog, pageable);
+            final int currentPage = page;
+            org.springframework.data.domain.Page<T> stagedBatch = transactionTemplate.execute(status -> {
+                Pageable pageable = PageRequest.of(currentPage, batchSize);
+                org.springframework.data.domain.Page<T> batch = repo.findAllByCatalog(stagedCatalog, pageable);
 
-            // Pre-fetch all ONLINE matching entities to avoid N+1 queries during the batch
-            List<T> onlineBatchFetch = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
-            Map<String, T> onlineExistingMap = new HashMap<>();
-            for (T o : onlineBatchFetch) {
-                onlineExistingMap.put(o.getSyncKey(), o);
-            }
-
-            for (T stagedEntity : stagedBatch.getContent()) {
-                T onlineEntity = onlineExistingMap.get(stagedEntity.getSyncKey());
-                if (onlineEntity == null) {
-                    onlineEntity = instantiateEntity(stagedEntity);
+                // Pre-fetch all ONLINE matching entities to avoid N+1 queries during the batch
+                List<T> onlineBatchFetch = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
+                Map<String, T> onlineExistingMap = new HashMap<>();
+                for (T o : onlineBatchFetch) {
+                    onlineExistingMap.put(o.getSyncKey(), o);
                 }
 
-                // 1. Copy simple properties (BeanUtils ignores associations via Metamodel)
-                copySimpleProperties(stagedEntity, onlineEntity, entityClass);
-                
-                // 2. Set Catalog
-                onlineEntity.setCatalog(onlineCatalog);
+                for (T stagedEntity : batch.getContent()) {
+                    T onlineEntity = onlineExistingMap.get(stagedEntity.getSyncKey());
+                    if (onlineEntity == null) {
+                        onlineEntity = instantiateEntity(stagedEntity);
+                    }
 
-                // 3. Resolve Relationships using Metamodel and Cache
-                resolveRelationships(stagedEntity, onlineEntity, entityClass, syncedCache, onlineCatalog);
+                    // 1. Copy simple properties (BeanUtils ignores associations via Metamodel)
+                    copySimpleProperties(stagedEntity, onlineEntity, entityClass);
+                    
+                    // 2. Set Catalog
+                    onlineEntity.setCatalog(onlineCatalog);
 
-                // 4. Save and add to global cache for downstream dependents
-                onlineEntity = repo.save(onlineEntity);
-                entityCache.put(onlineEntity.getSyncKey(), onlineEntity);
+                    // 3. Resolve Relationships using Metamodel and Cache
+                    resolveRelationships(stagedEntity, onlineEntity, entityClass, syncedCache, onlineCatalog);
+
+                    // 4. Save and add to global cache for downstream dependents
+                    onlineEntity = repo.save(onlineEntity);
+                    entityCache.put(onlineEntity.getSyncKey(), onlineEntity);
+                }
+
+                entityManager.flush();
+                entityManager.clear();
+                return batch;
+            });
+
+            if (stagedBatch != null) {
+                totalSynced += stagedBatch.getNumberOfElements();
+                hasNext = stagedBatch.hasNext();
+            } else {
+                hasNext = false;
             }
-
-            entityManager.flush();
-            entityManager.clear();
             page++;
 
-        } while (stagedBatch.hasNext());
+        } while (hasNext);
         
-        log.info("Synced {} records for {}", stagedBatch.getTotalElements(), entityClass.getSimpleName());
+        log.info("Synced {} records for {}", totalSynced, entityClass.getSimpleName());
     }
 
     private <T> void copySimpleProperties(T source, T target, Class<?> entityClass) {

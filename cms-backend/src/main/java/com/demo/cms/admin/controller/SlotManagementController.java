@@ -3,7 +3,7 @@ package com.demo.cms.admin.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.springframework.cache.annotation.CacheEvict;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import com.demo.cms.admin.dto.CreateSlotRequest;
 import com.demo.cms.admin.dto.SlotResponse;
 import com.demo.cms.admin.dto.UpdateSlotRequest;
-import com.demo.cms.admin.service.StorefrontCacheEvictionService;
+
 import com.demo.cms.admin.exception.ResourceNotFoundException;
 import com.demo.cms.admin.repository.PageRepository;
 import com.demo.cms.admin.repository.SlotRepository;
@@ -43,7 +43,6 @@ public class SlotManagementController {
     private final PageRepository pageRepository;
     private final com.demo.cms.admin.repository.CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
-    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
     private final com.demo.cms.admin.service.CatalogSyncService catalogSyncService;
 
     private com.demo.cms.entity.Catalog getStagedCatalog() {
@@ -87,7 +86,6 @@ public class SlotManagementController {
     }
 
     @PostMapping
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<SlotResponse> createSlot(@Valid @RequestBody CreateSlotRequest request) {
         Page page = pageRepository.findById(request.getPageId())
             .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + request.getPageId()));
@@ -100,12 +98,10 @@ public class SlotManagementController {
         slot.setCatalog(getStagedCatalog());
 
         Slot savedSlot = slotRepository.save(slot);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
     @PutMapping("/{id}")
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<SlotResponse> updateSlot(
             @PathVariable Long id,
             @Valid @RequestBody UpdateSlotRequest request) {
@@ -117,18 +113,15 @@ public class SlotManagementController {
         slot.setName(request.getName());
 
         Slot updatedSlot = slotRepository.save(slot);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.ok(mapToSlotResponse(updatedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
     @DeleteMapping("/{id}")
-    @CacheEvict(value = {"page", "slot"}, allEntries = true)
     public ResponseEntity<Void> deleteSlot(@PathVariable Long id) {
         if (!slotRepository.existsById(id)) {
             throw new ResourceNotFoundException("Slot not found with id: " + id);
         }
         slotRepository.deleteById(id);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return ResponseEntity.noContent().build();
     }
 

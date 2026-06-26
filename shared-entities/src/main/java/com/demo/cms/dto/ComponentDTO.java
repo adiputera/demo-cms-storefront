@@ -21,7 +21,8 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = ProductCarouselComponentDTO.class, name = "PRODUCT_CAROUSEL"),
     @JsonSubTypes.Type(value = NavigationComponentDTO.class, name = "NAVIGATION"),
     @JsonSubTypes.Type(value = QuickMenuComponentDTO.class, name = "QUICK_MENU"),
-    @JsonSubTypes.Type(value = ProductDetailComponentDTO.class, name = "PRODUCT_DETAIL")
+    @JsonSubTypes.Type(value = ProductDetailComponentDTO.class, name = "PRODUCT_DETAIL"),
+    @JsonSubTypes.Type(value = LatestArticleComponentDTO.class, name = "LATEST_ARTICLE")
 })
 public abstract class ComponentDTO {
 

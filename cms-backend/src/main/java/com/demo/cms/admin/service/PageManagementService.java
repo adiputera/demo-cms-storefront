@@ -10,7 +10,6 @@ import com.demo.cms.admin.exception.DuplicateResourceException;
 import com.demo.cms.mapper.EntityMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,7 +25,6 @@ public class PageManagementService {
     private final PageRepository pageRepository;
     private final CatalogRepository catalogRepository;
     private final EntityMapper entityMapper;
-    private final StorefrontCacheEvictionService storefrontCacheEvictionService;
     private final CatalogSyncService catalogSyncService;
 
     private Catalog getStagedCatalog() {
@@ -68,7 +66,6 @@ public class PageManagementService {
     }
 
     @Transactional
-    @CacheEvict(value = "pages", key = "#result.slug")
     public PageDTO createPage(PageDTO pageDTO) {
         log.info("Creating new page with slug: {}", pageDTO.getSlug());
         
@@ -94,12 +91,10 @@ public class PageManagementService {
 
         Page savedPage = pageRepository.save(page);
         log.info("Page created successfully with ID: {}", savedPage.getId());
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toPageDTO(savedPage, true);
     }
 
     @Transactional
-    @CacheEvict(value = "pages", key = "#pageDTO.slug")
     public PageDTO updatePage(Long id, PageDTO pageDTO) {
         log.info("Updating page with ID: {}", id);
         
@@ -127,12 +122,10 @@ public class PageManagementService {
 
         Page updatedPage = pageRepository.save(page);
         log.info("Page updated successfully with ID: {}", updatedPage.getId());
-        storefrontCacheEvictionService.evictStorefrontCaches();
         return entityMapper.toPageDTO(updatedPage, true);
     }
 
     @Transactional
-    @CacheEvict(value = "pages", allEntries = true)
     public void deletePage(Long id) {
         log.info("Deleting page with ID: {}", id);
         
@@ -141,7 +134,6 @@ public class PageManagementService {
         }
 
         pageRepository.deleteById(id);
-        storefrontCacheEvictionService.evictStorefrontCaches();
         log.info("Page deleted successfully with ID: {}", id);
     }
 }

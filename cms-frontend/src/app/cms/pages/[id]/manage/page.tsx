@@ -374,7 +374,13 @@ function ComponentPreview({ component }: { component: Component }) {
           </div>
         );
       default:
-        return null;
+        return (
+          <div className="text-sm text-gray-600 mt-2">
+            <p><strong>Type:</strong> {component.type}</p>
+            <p><strong>Name:</strong> {component.name}</p>
+            <p><strong>UID:</strong> {component.uid}</p>
+          </div>
+        );
     }
   };
 
