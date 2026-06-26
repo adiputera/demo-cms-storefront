@@ -61,6 +61,6 @@ management:
 logging:
   level:
     root: INFO
-    com.demo.cms: ${LOG_LEVEL:DEBUG}
+    id.adiputera.demo.cms: ${LOG_LEVEL:DEBUG}
     org.hibernate.SQL: ${LOG_LEVEL:DEBUG}
     org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL:TRACE}
