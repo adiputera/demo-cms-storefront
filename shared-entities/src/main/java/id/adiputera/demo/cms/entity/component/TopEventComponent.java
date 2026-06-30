@@ -16,27 +16,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "product_carousel_components")
+@Table(name = "top_event_components")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsComponent(displayName = "Product Carousel", description = "Grid of selected products by codes")
-public class ProductCarouselComponent extends Component {
+@CmsComponent(displayName = "Top Event", description = "Displays a single featured event")
+public class TopEventComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Carousel Title", type = "string", required = true, placeholder = "Featured Products")
+    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "e.g., Don't Miss This Event")
     private String title;
 
-    @Column(name = "product_codes", columnDefinition = "TEXT")
-    @CmsField(displayName = "Products", type = "multiple_items:product", required = true, placeholder = "Select products...")
-    private String productCodes; // Comma-separated list of product codes
+    @Column(name = "event_id")
+    @CmsField(displayName = "Featured Event", type = "item:event", required = true, placeholder = "Select an event...")
+    private String eventId;
 
     @Override
     public ComponentType getType() {
-        return ComponentType.PRODUCT_CAROUSEL;
+        return ComponentType.TOP_EVENT;
     }
 }
-

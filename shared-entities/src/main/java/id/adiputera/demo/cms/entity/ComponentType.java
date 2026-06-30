@@ -7,5 +7,8 @@ public enum ComponentType {
     NAVIGATION,
     QUICK_MENU,
     PRODUCT_DETAIL,
-    LATEST_ARTICLE
+    LATEST_ARTICLE,
+    TRENDING_ARTICLE,
+    LATEST_EVENT,
+    TOP_EVENT
 }

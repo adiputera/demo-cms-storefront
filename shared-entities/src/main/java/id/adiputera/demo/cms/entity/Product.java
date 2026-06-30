@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import id.adiputera.demo.cms.annotation.CmsSearchable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -31,6 +32,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@CmsSearchable(name = "name", displayName = "Product Name", type = "string")
+@CmsSearchable(name = "code", displayName = "Product Code", type = "string")
 public class Product extends CatalogAwareModel {
 
     @NotBlank(message = "Product code is required")

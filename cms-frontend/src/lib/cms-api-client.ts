@@ -138,6 +138,62 @@ class CMSApiClient {
     return response.json();
   }
 
+  // Articles
+  async getAllArticles() {
+    const response = await fetch(`${this.baseUrl}/articles`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch articles: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getArticle(id: number) {
+    const response = await fetch(`${this.baseUrl}/articles/${id}`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch article: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async createArticle(article: any) {
+    const response = await fetch(`${this.baseUrl}/articles`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(article),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create article');
+    }
+    return response.json();
+  }
+
+  async updateArticle(id: number, article: any) {
+    const response = await fetch(`${this.baseUrl}/articles/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(article),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to update article');
+    }
+    return response.json();
+  }
+
+  async deleteArticle(id: number) {
+    const response = await fetch(`${this.baseUrl}/articles/${id}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete article');
+    }
+    return response.json();
+  }
+
   // Slots
   async getSlotsByPage(pageId: number) {
     const response = await fetch(`${this.baseUrl}/slots/page/${pageId}`, { cache: 'no-store' });
@@ -289,6 +345,29 @@ class CMSApiClient {
     const response = await fetch(`${this.baseUrl}/components/types/${type}/schema`, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`Failed to fetch component schema: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  // Generic Item Search
+  async getSearchMetadata(type: string) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/search-metadata`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch search metadata for type ${type}: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async searchItems(type: string, criteria: Record<string, string>) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ criteria }),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Failed to search items for type ${type}`);
     }
     return response.json();
   }

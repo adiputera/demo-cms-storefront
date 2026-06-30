@@ -54,6 +54,14 @@ export default function CMSLayout({
                     Products
                   </Link>
                 </li>
+                <li>
+                  <Link
+                    href="/cms/articles"
+                    className="block px-4 py-2 rounded hover:bg-gray-100 text-gray-700 hover:text-gray-900"
+                  >
+                    Articles
+                  </Link>
+                </li>
               </ul>
             </nav>
           </aside>

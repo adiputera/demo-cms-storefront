@@ -111,7 +111,37 @@ public class EntityMapper {
             case QUICK_MENU -> toQuickMenuComponentDTO((QuickMenuComponent) component);
             case PRODUCT_DETAIL -> toProductDetailComponentDTO((ProductDetailComponent) component);
             case LATEST_ARTICLE -> toLatestArticleComponentDTO((LatestArticleComponent) component);
+            case TRENDING_ARTICLE -> toTrendingArticleComponentDTO((TrendingArticleComponent) component);
+            case LATEST_EVENT -> toLatestEventComponentDTO((LatestEventComponent) component);
+            case TOP_EVENT -> toTopEventComponentDTO((TopEventComponent) component);
         };
+    }
+
+    private TopEventComponentDTO toTopEventComponentDTO(TopEventComponent component) {
+        if (component == null) return null;
+        return TopEventComponentDTO.builder()
+                .id(component.getId())
+                .uid(component.getUid())
+                .name(component.getName())
+                .type(component.getType().name())
+                .title(component.getTitle())
+                .eventId(component.getEventId())
+                .build();
+    }
+
+    private TrendingArticleComponentDTO toTrendingArticleComponentDTO(TrendingArticleComponent component) {
+        if (component == null) return null;
+        List<String> articleIds = component.getArticleIds() != null
+                ? Arrays.asList(component.getArticleIds().split(","))
+                : Collections.emptyList();
+        return TrendingArticleComponentDTO.builder()
+                .id(component.getId())
+                .uid(component.getUid())
+                .name(component.getName())
+                .type(component.getType().name())
+                .title(component.getTitle())
+                .articleIds(articleIds)
+                .build();
     }
 
     private ParagraphComponentDTO toParagraphComponentDTO(ParagraphComponent component) {
@@ -199,6 +229,21 @@ public class EntityMapper {
                 .type(component.getType().name())
                 .title(component.getTitle())
                 .articleCount(component.getArticleCount())
+                .build();
+    }
+
+    private LatestEventComponentDTO toLatestEventComponentDTO(LatestEventComponent component) {
+        if (component == null) return null;
+        List<String> eventIds = component.getEventIds() != null
+                ? Arrays.asList(component.getEventIds().split(","))
+                : Collections.emptyList();
+        return LatestEventComponentDTO.builder()
+                .id(component.getId())
+                .uid(component.getUid())
+                .name(component.getName())
+                .type(component.getType().name())
+                .title(component.getTitle())
+                .eventIds(eventIds)
                 .build();
     }
 

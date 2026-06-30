@@ -117,6 +117,10 @@ docker compose up -d --build
 4. **Product Carousel (`PRODUCT_CAROUSEL`)**: A responsive grid carousel displaying selected products by codes.
 5. **Navigation Link (`NAVIGATION`)**: A simple text link with an optional icon.
 6. **Quick Menu Tile (`QUICK_MENU`)**: A clickable grid tile card.
+7. **Latest Articles (`LATEST_ARTICLE`)**: Displays a fixed number of the latest articles.
+8. **Trending Articles (`TRENDING_ARTICLE`)**: Displays a curated list of trending articles using the generic `multiple_items:article` schema mapping.
+9. **Latest Events (`LATEST_EVENT`)**: Displays a list of events using the generic `multiple_items:event` schema mapping.
+10. **Top Event (`TOP_EVENT`)**: Displays a single featured event using the generic `item:event` schema mapping.
 
 ---
 

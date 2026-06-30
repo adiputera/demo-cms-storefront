@@ -8,6 +8,8 @@ import id.adiputera.demo.cms.entity.ComponentType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,27 +18,26 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "product_carousel_components")
+@Table(name = "latest_event_components")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsComponent(displayName = "Product Carousel", description = "Grid of selected products by codes")
-public class ProductCarouselComponent extends Component {
+@CmsComponent(displayName = "Latest Events", description = "Displays a list of the latest events")
+public class LatestEventComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Carousel Title", type = "string", required = true, placeholder = "Featured Products")
+    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "e.g., Upcoming Events")
     private String title;
 
-    @Column(name = "product_codes", columnDefinition = "TEXT")
-    @CmsField(displayName = "Products", type = "multiple_items:product", required = true, placeholder = "Select products...")
-    private String productCodes; // Comma-separated list of product codes
+    @Column(name = "event_ids", columnDefinition = "TEXT")
+    @CmsField(displayName = "Events", type = "multiple_items:event", required = true, placeholder = "Select events...")
+    private String eventIds;
 
     @Override
     public ComponentType getType() {
-        return ComponentType.PRODUCT_CAROUSEL;
+        return ComponentType.LATEST_EVENT;
     }
 }
-

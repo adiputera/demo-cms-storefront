@@ -29,7 +29,6 @@ import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.CatalogAwareModel;
 import id.adiputera.demo.cms.entity.CatalogVersion;
 import id.adiputera.demo.cms.entity.SyncableEntity;
-import id.adiputera.demo.cms.entity.Product;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
@@ -223,7 +222,8 @@ public class CatalogSyncService {
 
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
-    public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(List<T> stagedItems, Class<T> entityClass) {
+    public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(
+            List<T> stagedItems, Class<T> entityClass, String catalogId) {
         Map<String, String> statusMap = new HashMap<>();
         if (stagedItems.isEmpty()) return statusMap;
 
@@ -234,12 +234,8 @@ public class CatalogSyncService {
         }
 
         CatalogAwareRepository<T> repo = (CatalogAwareRepository<T>) repoOpt.get();
-        String expectedCatalogId = "contentCatalog";
-        if (Product.class.isAssignableFrom(entityClass)) {
-            expectedCatalogId = "productCatalog";
-        }
-        
-        Catalog onlineCatalog = catalogRepository.findByCatalogIdAndVersion(expectedCatalogId, CatalogVersion.ONLINE)
+
+        Catalog onlineCatalog = catalogRepository.findByCatalogIdAndVersion(catalogId, CatalogVersion.ONLINE)
                 .orElse(null);
 
         if (onlineCatalog == null) {
@@ -247,8 +243,6 @@ public class CatalogSyncService {
             return statusMap;
         }
 
-        // Fetch all online items of this class. If there are many, we could filter by syncKey in a custom query,
-        // but for now, fetching all is fine since this is an admin dashboard.
         List<T> onlineRecords = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
         Map<String, T> onlineMap = new HashMap<>();
         for (T o : onlineRecords) {
@@ -266,6 +260,17 @@ public class CatalogSyncService {
             }
         }
         return statusMap;
+    }
+
+    @Transactional(readOnly = true)
+    public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(List<T> stagedItems, Class<T> entityClass) {
+        if (stagedItems.isEmpty()) return new HashMap<>();
+        // Force-initialize the lazy catalog proxy so getCatalogId() is safe outside a session
+        org.hibernate.Hibernate.initialize(stagedItems.get(0).getCatalog());
+        String catalogId = stagedItems.get(0).getCatalog() != null
+                ? stagedItems.get(0).getCatalog().getCatalogId()
+                : "contentCatalog";
+        return calculateSyncStatus(stagedItems, entityClass, catalogId);
     }
 
     @SuppressWarnings("unchecked")

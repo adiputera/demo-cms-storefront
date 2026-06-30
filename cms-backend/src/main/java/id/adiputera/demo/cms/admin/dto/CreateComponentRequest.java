@@ -24,7 +24,10 @@ import lombok.NoArgsConstructor;
     @JsonSubTypes.Type(value = CreateNavigationComponentRequest.class, name = "NAVIGATION"),
     @JsonSubTypes.Type(value = CreateQuickMenuComponentRequest.class, name = "QUICK_MENU"),
     @JsonSubTypes.Type(value = CreateProductDetailComponentRequest.class, name = "PRODUCT_DETAIL"),
-    @JsonSubTypes.Type(value = CreateLatestArticleComponentRequest.class, name = "LATEST_ARTICLE")
+    @JsonSubTypes.Type(value = CreateLatestArticleComponentRequest.class, name = "LATEST_ARTICLE"),
+    @JsonSubTypes.Type(value = CreateTrendingArticleComponentRequest.class, name = "TRENDING_ARTICLE"),
+    @JsonSubTypes.Type(value = CreateLatestEventComponentRequest.class, name = "LATEST_EVENT"),
+    @JsonSubTypes.Type(value = CreateTopEventComponentRequest.class, name = "TOP_EVENT")
 })
 public abstract class CreateComponentRequest {
     

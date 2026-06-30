@@ -472,8 +472,9 @@ function ComponentFormModal({
   const [fields, setFields] = useState<any>({});
   const [schema, setSchema] = useState<any>(null);
   const [loadingSchema, setLoadingSchema] = useState(true);
-  const [products, setProducts] = useState<any[]>([]);
-  const [productSearch, setProductSearch] = useState('');
+  const [searchMetadata, setSearchMetadata] = useState<Record<string, any>>({});
+  const [searchResults, setSearchResults] = useState<Record<string, any[]>>({});
+  const [searchCriteria, setSearchCriteria] = useState<Record<string, Record<string, string>>>({});
 
   // Fetch available component types on mount
   useEffect(() => {
@@ -496,31 +497,42 @@ function ComponentFormModal({
         const schemaData = await cmsApiClient.getComponentSchema(type);
         setSchema(schemaData);
         
-        if (schemaData && schemaData.fields && schemaData.fields.some((f: any) => f.type === 'multiple_products')) {
-          try {
-            const productsData = await cmsApiClient.getAllProducts();
-            setProducts(productsData.data || productsData);
-          } catch (err) {
-            console.error('Error fetching products:', err);
-          }
-        }
+        const newMetadata: Record<string, any> = {};
         
         // Initialize fields from component values or schema defaults
         const initialFields: any = {};
         if (schemaData && schemaData.fields) {
-          schemaData.fields.forEach((field: any) => {
+          for (const field of schemaData.fields) {
             const val = component?.[field.name];
             if (field.type === 'array_string') {
               initialFields[field.name] = Array.isArray(val) ? val.join(', ') : val || '';
-            } else if (field.type === 'multiple_products') {
-              initialFields[field.name] = typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : (Array.isArray(val) ? val : []);
+            } else if (field.type.startsWith('multiple_items:') || field.type.startsWith('item:')) {
+              if (field.type.startsWith('item:')) {
+                initialFields[field.name] = val || '';
+              } else {
+                initialFields[field.name] = typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : (Array.isArray(val) ? val : []);
+              }
+              
+              const itemType = field.type.split(':')[1];
+              if (!newMetadata[itemType]) {
+                try {
+                  const meta = await cmsApiClient.getSearchMetadata(itemType);
+                  newMetadata[itemType] = meta.data;
+                  // Auto trigger initial search with empty criteria
+                  const res = await cmsApiClient.searchItems(itemType, {});
+                  setSearchResults(prev => ({ ...prev, [itemType]: res.data }));
+                } catch (err) {
+                  console.error('Error fetching search metadata or initial items:', err);
+                }
+              }
             } else if (field.type === 'boolean') {
               initialFields[field.name] = val !== undefined ? !!val : false;
             } else {
               initialFields[field.name] = val || '';
             }
-          });
+          }
         }
+        setSearchMetadata(newMetadata);
         setFields(initialFields);
         setLoadingSchema(false);
       } catch (err) {
@@ -530,6 +542,21 @@ function ComponentFormModal({
     };
     fetchSchema();
   }, [type, component]);
+
+  // Debounced search trigger
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      Object.keys(searchCriteria).forEach(async (itemType) => {
+        try {
+          const res = await cmsApiClient.searchItems(itemType, searchCriteria[itemType]);
+          setSearchResults(prev => ({ ...prev, [itemType]: res.data }));
+        } catch (err) {
+          console.error(`Error searching items for type ${itemType}:`, err);
+        }
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchCriteria]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -543,8 +570,10 @@ function ComponentFormModal({
           parsedFields[field.name] = typeof val === 'string'
             ? val.split(',').map((s: string) => s.trim()).filter(Boolean)
             : val || [];
-        } else if (field.type === 'multiple_products') {
+        } else if (field.type.startsWith('multiple_items:')) {
           parsedFields[field.name] = Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+        } else if (field.type.startsWith('item:')) {
+          parsedFields[field.name] = val || null;
         } else if (field.type === 'boolean') {
           parsedFields[field.name] = !!val;
         } else {
@@ -621,39 +650,60 @@ function ComponentFormModal({
                   required={field.required}
                 />
               </div>
-            ) : field.type === 'multiple_products' ? (
+            ) : field.type.startsWith('multiple_items:') || field.type.startsWith('item:') ? (
               <div className="space-y-2 mt-2">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  value={productSearch}
-                  onChange={(e) => setProductSearch(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm mb-2"
-                />
+                {searchMetadata[field.type.split(':')[1]]?.fields?.map((metaField: any) => (
+                  <input
+                    key={metaField.name}
+                    type="text"
+                    placeholder={`Search ${metaField.displayName}...`}
+                    value={searchCriteria[field.type.split(':')[1]]?.[metaField.name] || ''}
+                    onChange={(e) => {
+                      const itemType = field.type.split(':')[1];
+                      setSearchCriteria(prev => ({
+                        ...prev,
+                        [itemType]: {
+                          ...(prev[itemType] || {}),
+                          [metaField.name]: e.target.value
+                        }
+                      }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm mb-2"
+                  />
+                ))}
+                
                 <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-2 bg-gray-50">
-                  {products.length === 0 && <p className="text-sm text-gray-500">No products found.</p>}
-                  {products
-                    .filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()) || p.code.toLowerCase().includes(productSearch.toLowerCase()))
-                    .map(p => {
-                      const isChecked = (fields[field.name] || []).includes(p.code);
+                  {(!searchResults[field.type.split(':')[1]] || searchResults[field.type.split(':')[1]].length === 0) && (
+                    <p className="text-sm text-gray-500">No items found.</p>
+                  )}
+                  {searchResults[field.type.split(':')[1]]?.map((item: any) => {
+                      const isMultiple = field.type.startsWith('multiple_items:');
+                      const isChecked = isMultiple 
+                          ? (fields[field.name] || []).includes(item.id)
+                          : fields[field.name] === item.id;
                       return (
-                        <label key={p.id} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
+                        <label key={item.id} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
                           <input
-                            type="checkbox"
+                            type={isMultiple ? "checkbox" : "radio"}
+                            name={`field-${field.name}`}
                             checked={isChecked}
                             onChange={(e) => {
-                              const currentSelected = fields[field.name] || [];
-                              if (e.target.checked) {
-                                setFields({ ...fields, [field.name]: [...currentSelected, p.code] });
+                              if (isMultiple) {
+                                const currentSelected = fields[field.name] || [];
+                                if (e.target.checked) {
+                                  setFields({ ...fields, [field.name]: [...currentSelected, item.id] });
+                                } else {
+                                  setFields({ ...fields, [field.name]: currentSelected.filter((c: string) => c !== item.id) });
+                                }
                               } else {
-                                setFields({ ...fields, [field.name]: currentSelected.filter((c: string) => c !== p.code) });
+                                setFields({ ...fields, [field.name]: item.id });
                               }
                             }}
                             className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                           />
                           <div>
-                            <p className="text-sm font-medium text-gray-900">{p.name}</p>
-                            <p className="text-xs text-gray-500">{p.code} - ${p.price}</p>
+                            <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                            <p className="text-xs text-gray-500">{item.subLabel}</p>
                           </div>
                         </label>
                       );

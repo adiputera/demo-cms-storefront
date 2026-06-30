@@ -16,27 +16,27 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name = "product_carousel_components")
+@Table(name = "trending_article_components")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsComponent(displayName = "Product Carousel", description = "Grid of selected products by codes")
-public class ProductCarouselComponent extends Component {
+@CmsComponent(displayName = "Trending Articles", description = "List of trending articles")
+public class TrendingArticleComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Carousel Title", type = "string", required = true, placeholder = "Featured Products")
+    @CmsField(displayName = "Section Title", type = "string", required = true, placeholder = "Trending Now")
     private String title;
 
-    @Column(name = "product_codes", columnDefinition = "TEXT")
-    @CmsField(displayName = "Products", type = "multiple_items:product", required = true, placeholder = "Select products...")
-    private String productCodes; // Comma-separated list of product codes
+    @Column(name = "article_ids", columnDefinition = "TEXT")
+    @CmsField(displayName = "Articles", type = "multiple_items:article", required = true, placeholder = "Select articles...")
+    private String articleIds;
 
     @Override
     public ComponentType getType() {
-        return ComponentType.PRODUCT_CAROUSEL;
+        // Wait, I need to add TRENDING_ARTICLE to ComponentType
+        return ComponentType.valueOf("TRENDING_ARTICLE"); // We will need to add it to the enum
     }
 }
-

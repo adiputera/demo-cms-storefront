@@ -23,6 +23,7 @@ import id.adiputera.demo.cms.admin.dto.ComponentSchema;
 import id.adiputera.demo.cms.admin.dto.ComponentTypeInfo;
 import id.adiputera.demo.cms.admin.dto.CreateComponentRequest;
 import id.adiputera.demo.cms.admin.dto.CreateLatestArticleComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateLatestEventComponentRequest;
 import id.adiputera.demo.cms.admin.dto.CreateBannerComponentRequest;
 import id.adiputera.demo.cms.admin.dto.CreateParagraphComponentRequest;
 import id.adiputera.demo.cms.admin.dto.CreateProductCarouselComponentRequest;
@@ -34,6 +35,8 @@ import id.adiputera.demo.cms.admin.exception.BadRequestException;
 import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
 import id.adiputera.demo.cms.admin.repository.ComponentRepository;
 import id.adiputera.demo.cms.admin.repository.SlotRepository;
+import id.adiputera.demo.cms.admin.dto.CreateTrendingArticleComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateTopEventComponentRequest;
 
 import id.adiputera.demo.cms.dto.ComponentDTO;
 import id.adiputera.demo.cms.entity.Component;
@@ -44,7 +47,10 @@ import id.adiputera.demo.cms.entity.component.ParagraphComponent;
 import id.adiputera.demo.cms.entity.component.ProductCarouselComponent;
 import id.adiputera.demo.cms.entity.component.QuickMenuComponent;
 import id.adiputera.demo.cms.entity.component.LatestArticleComponent;
+import id.adiputera.demo.cms.entity.component.LatestEventComponent;
 import id.adiputera.demo.cms.entity.component.ProductDetailComponent;
+import id.adiputera.demo.cms.entity.component.TrendingArticleComponent;
+import id.adiputera.demo.cms.entity.component.TopEventComponent;
 import id.adiputera.demo.cms.mapper.EntityMapper;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -227,6 +233,15 @@ public class ComponentManagementController {
             case "LATEST_ARTICLE":
                 component = createLatestArticleComponent(request);
                 break;
+            case "TRENDING_ARTICLE":
+                component = createTrendingArticleComponent(request);
+                break;
+            case "LATEST_EVENT":
+                component = createLatestEventComponent(request);
+                break;
+            case "TOP_EVENT":
+                component = createTopEventComponent(request);
+                break;
             default:
                 throw new BadRequestException("Unknown component type: " + request.getType());
         }
@@ -257,6 +272,12 @@ public class ComponentManagementController {
             updateProductDetailComponent(detail, req);
         } else if (existing instanceof LatestArticleComponent latestArticle) {
             updateLatestArticleComponent(latestArticle, request);
+        } else if (existing instanceof LatestEventComponent latestEvent) {
+            updateLatestEventComponent(latestEvent, request);
+        } else if (existing instanceof TrendingArticleComponent trendingArticle && request instanceof CreateTrendingArticleComponentRequest req) {
+            updateTrendingArticleComponent(trendingArticle, req);
+        } else if (existing instanceof TopEventComponent topEvent && request instanceof CreateTopEventComponentRequest req) {
+            updateTopEventComponent(topEvent, req);
         }
     }
 
@@ -368,6 +389,58 @@ public class ComponentManagementController {
         CreateLatestArticleComponentRequest req = objectMapper.convertValue(request, CreateLatestArticleComponentRequest.class);
         if (req.getTitle() != null) component.setTitle(req.getTitle());
         if (req.getArticleCount() != null) component.setArticleCount(req.getArticleCount());
+    }
+
+    private LatestEventComponent createLatestEventComponent(CreateComponentRequest request) {
+        CreateLatestEventComponentRequest req = objectMapper.convertValue(request, CreateLatestEventComponentRequest.class);
+        LatestEventComponent component = new LatestEventComponent();
+        component.setTitle(req.getTitle());
+        if (req.getEventIds() != null) {
+            component.setEventIds(String.join(",", req.getEventIds()));
+        }
+        return component;
+    }
+
+    private void updateLatestEventComponent(LatestEventComponent component, CreateComponentRequest request) {
+        CreateLatestEventComponentRequest req = objectMapper.convertValue(request, CreateLatestEventComponentRequest.class);
+        if (req.getTitle() != null) component.setTitle(req.getTitle());
+        if (req.getEventIds() != null) {
+            component.setEventIds(String.join(",", req.getEventIds()));
+        } else {
+            component.setEventIds(null);
+        }
+    }
+
+    private TrendingArticleComponent createTrendingArticleComponent(CreateComponentRequest request) {
+        CreateTrendingArticleComponentRequest req = (CreateTrendingArticleComponentRequest) request;
+        TrendingArticleComponent trending = new TrendingArticleComponent();
+        trending.setTitle(req.getTitle());
+        if (req.getArticleIds() != null) {
+            trending.setArticleIds(String.join(",", req.getArticleIds()));
+        }
+        return trending;
+    }
+
+    private void updateTrendingArticleComponent(TrendingArticleComponent trending, CreateTrendingArticleComponentRequest req) {
+        trending.setTitle(req.getTitle());
+        if (req.getArticleIds() != null) {
+            trending.setArticleIds(String.join(",", req.getArticleIds()));
+        } else {
+            trending.setArticleIds(null);
+        }
+    }
+
+    private TopEventComponent createTopEventComponent(CreateComponentRequest request) {
+        CreateTopEventComponentRequest req = (CreateTopEventComponentRequest) request;
+        TopEventComponent topEvent = new TopEventComponent();
+        topEvent.setTitle(req.getTitle());
+        topEvent.setEventId(req.getEventId());
+        return topEvent;
+    }
+
+    private void updateTopEventComponent(TopEventComponent topEvent, CreateTopEventComponentRequest req) {
+        topEvent.setTitle(req.getTitle());
+        topEvent.setEventId(req.getEventId());
     }
 
     @GetMapping("/types")
