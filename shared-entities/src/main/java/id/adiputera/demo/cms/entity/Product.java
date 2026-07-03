@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import id.adiputera.demo.cms.annotation.CmsSearchable;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -61,5 +62,10 @@ public class Product extends CatalogAwareModel {
     @Override
     public String getSyncKey() {
         return this.code;
+    }
+
+    @Override
+    public ItemSearchResultDTO toItemSearchResultDTO() {
+        return new ItemSearchResultDTO(getCode(), getName(), getCode() + " - $" + getPrice());
     }
 }

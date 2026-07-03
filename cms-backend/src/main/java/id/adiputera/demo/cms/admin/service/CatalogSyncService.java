@@ -28,7 +28,6 @@ import id.adiputera.demo.cms.admin.repository.CatalogRepository;
 import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.CatalogAwareModel;
 import id.adiputera.demo.cms.entity.CatalogVersion;
-import id.adiputera.demo.cms.entity.SyncableEntity;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
@@ -384,7 +383,7 @@ public class CatalogSyncService {
                 if (!CatalogAwareModel.class.isAssignableFrom(targetType)) continue;
 
                 @SuppressWarnings("unchecked")
-                Collection<SyncableEntity> stagedCol = (Collection<SyncableEntity>) stagedVal;
+                Collection<CatalogAwareModel> stagedCol = (Collection<CatalogAwareModel>) stagedVal;
                 
                 @SuppressWarnings("unchecked")
                 Collection<Object> existingCol = (Collection<Object>) onlineWrapper.getPropertyValue(propName);
@@ -398,7 +397,7 @@ public class CatalogSyncService {
                 }
 
                 existingCol.clear();
-                for (SyncableEntity stagedItem : stagedCol) {
+                for (CatalogAwareModel stagedItem : stagedCol) {
                     CatalogAwareModel onlineItem = getFromCache(targetType, stagedItem.getSyncKey(), cache, onlineCatalog);
                     if (onlineItem != null) {
                         existingCol.add(onlineItem);
@@ -410,7 +409,7 @@ public class CatalogSyncService {
                 Class<?> targetType = attr.getJavaType();
                 if (!CatalogAwareModel.class.isAssignableFrom(targetType)) continue;
 
-                SyncableEntity stagedRef = (SyncableEntity) stagedVal;
+                CatalogAwareModel stagedRef = (CatalogAwareModel) stagedVal;
                 CatalogAwareModel onlineRef = getFromCache(targetType, stagedRef.getSyncKey(), cache, onlineCatalog);
                 if (onlineRef != null) {
                     onlineWrapper.setPropertyValue(propName, onlineRef);

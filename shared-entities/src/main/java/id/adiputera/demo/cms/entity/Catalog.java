@@ -4,14 +4,12 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -33,11 +31,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Catalog {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Catalog extends ItemModel {
 
     @NotBlank(message = "Catalog ID is required")
     @Column(name = "catalog_id", nullable = false, length = 100)
@@ -47,4 +41,13 @@ public class Catalog {
     @Enumerated(EnumType.STRING)
     @Column(name = "version", nullable = false, length = 20)
     private CatalogVersion version;
+
+    @Override
+    public ItemSearchResultDTO toItemSearchResultDTO() {
+        return new ItemSearchResultDTO(
+                getId() != null ? String.valueOf(getId()) : null,
+                catalogId,
+                version != null ? version.name() : null
+        );
+    }
 }

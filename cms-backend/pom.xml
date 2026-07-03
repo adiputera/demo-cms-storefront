@@ -64,8 +64,8 @@
 
         <!-- Flyway for Database Migrations -->
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
 
         <dependency>
@@ -136,7 +136,7 @@
             <plugin>
                 <groupId>org.flywaydb</groupId>
                 <artifactId>flyway-maven-plugin</artifactId>
-                <version>10.4.1</version>
+                <version>11.10.3</version>
                 <configuration>
                     <url>${env.DATABASE_URL}</url>
                     <user>${env.DATABASE_USERNAME}</user>

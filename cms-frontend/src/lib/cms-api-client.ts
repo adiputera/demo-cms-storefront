@@ -19,6 +19,12 @@ export interface ErrorResponse {
   validationErrors?: Record<string, string>;
 }
 
+export interface SearchCriteria {
+  field: string;
+  operator: string;
+  value: string;
+}
+
 class CMSApiClient {
   private baseUrl: string;
 
@@ -358,7 +364,7 @@ class CMSApiClient {
     return response.json();
   }
 
-  async searchItems(type: string, criteria: Record<string, string>) {
+  async searchItems(type: string, criteria: SearchCriteria[]) {
     const response = await fetch(`${this.baseUrl}/items/${type}/search`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

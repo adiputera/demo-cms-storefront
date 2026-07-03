@@ -3,7 +3,7 @@ package id.adiputera.demo.cms.admin.controller;
 import id.adiputera.demo.cms.admin.dto.ApiResponse;
 import id.adiputera.demo.cms.admin.dto.ItemSearchMetadataDTO;
 import id.adiputera.demo.cms.admin.dto.ItemSearchRequest;
-import id.adiputera.demo.cms.admin.dto.ItemSearchResultDTO;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import id.adiputera.demo.cms.admin.service.ItemSearchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +34,7 @@ public class ItemSearchController {
             @PathVariable("type") String type,
             @RequestBody ItemSearchRequest request) {
         log.info("POST /api/cms/items/{}/search with criteria: {}", type, request.getCriteria());
-        Map<String, String> criteria = request.getCriteria() != null ? request.getCriteria() : Map.of();
+        var criteria = request.getCriteria() != null ? request.getCriteria() : List.<id.adiputera.demo.cms.admin.dto.SearchCriteria>of();
         List<ItemSearchResultDTO> results = itemSearchService.searchItems(type, criteria);
         return ResponseEntity.ok(ApiResponse.success(results));
     }

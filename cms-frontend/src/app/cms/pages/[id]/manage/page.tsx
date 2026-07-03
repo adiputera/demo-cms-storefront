@@ -473,8 +473,19 @@ function ComponentFormModal({
   const [schema, setSchema] = useState<any>(null);
   const [loadingSchema, setLoadingSchema] = useState(true);
   const [searchMetadata, setSearchMetadata] = useState<Record<string, any>>({});
+  const [searchCriteria, setSearchCriteria] = useState<Record<string, Record<string, { value: string, operator: string }>>>({});
   const [searchResults, setSearchResults] = useState<Record<string, any[]>>({});
-  const [searchCriteria, setSearchCriteria] = useState<Record<string, Record<string, string>>>({});
+
+  const deduplicateItems = (items: any[]) => {
+    if (!Array.isArray(items)) return [];
+    const map = new Map();
+    items.forEach(item => {
+      if (item && item.id && !map.has(item.id)) {
+        map.set(item.id, item);
+      }
+    });
+    return Array.from(map.values());
+  };
 
   // Fetch available component types on mount
   useEffect(() => {
@@ -519,8 +530,8 @@ function ComponentFormModal({
                   const meta = await cmsApiClient.getSearchMetadata(itemType);
                   newMetadata[itemType] = meta.data;
                   // Auto trigger initial search with empty criteria
-                  const res = await cmsApiClient.searchItems(itemType, {});
-                  setSearchResults(prev => ({ ...prev, [itemType]: res.data }));
+                  const res = await cmsApiClient.searchItems(itemType, []);
+                  setSearchResults(prev => ({ ...prev, [itemType]: deduplicateItems(res.data) }));
                 } catch (err) {
                   console.error('Error fetching search metadata or initial items:', err);
                 }
@@ -548,8 +559,16 @@ function ComponentFormModal({
     const timer = setTimeout(() => {
       Object.keys(searchCriteria).forEach(async (itemType) => {
         try {
-          const res = await cmsApiClient.searchItems(itemType, searchCriteria[itemType]);
-          setSearchResults(prev => ({ ...prev, [itemType]: res.data }));
+          const typeCriteriaMap = searchCriteria[itemType] || {};
+          const formattedCriteria = Object.entries(typeCriteriaMap)
+            .filter(([_, data]) => data.value !== undefined && data.value !== null && data.value.trim() !== '')
+            .map(([field, data]) => ({
+              field,
+              operator: data.operator,
+              value: data.value.trim()
+            }));
+          const res = await cmsApiClient.searchItems(itemType, formattedCriteria);
+          setSearchResults(prev => ({ ...prev, [itemType]: deduplicateItems(res.data) }));
         } catch (err) {
           console.error(`Error searching items for type ${itemType}:`, err);
         }
@@ -653,36 +672,66 @@ function ComponentFormModal({
             ) : field.type.startsWith('multiple_items:') || field.type.startsWith('item:') ? (
               <div className="space-y-2 mt-2">
                 {searchMetadata[field.type.split(':')[1]]?.fields?.map((metaField: any) => (
-                  <input
-                    key={metaField.name}
-                    type="text"
-                    placeholder={`Search ${metaField.displayName}...`}
-                    value={searchCriteria[field.type.split(':')[1]]?.[metaField.name] || ''}
-                    onChange={(e) => {
-                      const itemType = field.type.split(':')[1];
-                      setSearchCriteria(prev => ({
-                        ...prev,
-                        [itemType]: {
-                          ...(prev[itemType] || {}),
-                          [metaField.name]: e.target.value
-                        }
-                      }));
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm mb-2"
-                  />
+                  <div key={metaField.name} className="flex gap-2 mb-2">
+                    <select
+                      value={searchCriteria[field.type.split(':')[1]]?.[metaField.name]?.operator || (metaField.type === 'number' ? 'EQUALS' : 'CONTAINS')}
+                      onChange={(e) => {
+                        const itemType = field.type.split(':')[1];
+                        setSearchCriteria(prev => ({
+                          ...prev,
+                          [itemType]: {
+                            ...(prev[itemType] || {}),
+                            [metaField.name]: {
+                              ...(prev[itemType]?.[metaField.name] || { value: '' }),
+                              operator: e.target.value
+                            }
+                          }
+                        }));
+                      }}
+                      className="w-1/3 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    >
+                      {metaField.type !== 'number' && <option value="CONTAINS">Contains</option>}
+                      <option value="EQUALS">Equals</option>
+                      {metaField.type === 'number' && (
+                        <>
+                          <option value="GREATER_THAN">Greater Than</option>
+                          <option value="LESS_THAN">Less Than</option>
+                        </>
+                      )}
+                    </select>
+                    <input
+                      type="text"
+                      placeholder={`Search ${metaField.displayName}...`}
+                      value={searchCriteria[field.type.split(':')[1]]?.[metaField.name]?.value || ''}
+                      onChange={(e) => {
+                        const itemType = field.type.split(':')[1];
+                        setSearchCriteria(prev => ({
+                          ...prev,
+                          [itemType]: {
+                            ...(prev[itemType] || {}),
+                            [metaField.name]: {
+                              ...(prev[itemType]?.[metaField.name] || { operator: metaField.type === 'number' ? 'EQUALS' : 'CONTAINS' }),
+                              value: e.target.value
+                            }
+                          }
+                        }));
+                      }}
+                      className="w-2/3 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
                 ))}
                 
                 <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-2 bg-gray-50">
                   {(!searchResults[field.type.split(':')[1]] || searchResults[field.type.split(':')[1]].length === 0) && (
                     <p className="text-sm text-gray-500">No items found.</p>
                   )}
-                  {searchResults[field.type.split(':')[1]]?.map((item: any) => {
+                  {searchResults[field.type.split(':')[1]]?.map((item: any, idx: number) => {
                       const isMultiple = field.type.startsWith('multiple_items:');
                       const isChecked = isMultiple 
                           ? (fields[field.name] || []).includes(item.id)
                           : fields[field.name] === item.id;
                       return (
-                        <label key={item.id} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
+                        <label key={`${item.id}-${idx}`} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
                           <input
                             type={isMultiple ? "checkbox" : "radio"}
                             name={`field-${field.name}`}

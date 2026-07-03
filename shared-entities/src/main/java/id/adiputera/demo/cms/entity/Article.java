@@ -12,6 +12,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import java.util.UUID;
 
 @Entity
@@ -51,5 +52,10 @@ public class Article extends CatalogAwareModel {
     @Override
     public String getSyncKey() {
         return uid;
+    }
+
+    @Override
+    public ItemSearchResultDTO toItemSearchResultDTO() {
+        return new ItemSearchResultDTO(getId() != null ? String.valueOf(getId()) : null, getTitle(), "Article");
     }
 }

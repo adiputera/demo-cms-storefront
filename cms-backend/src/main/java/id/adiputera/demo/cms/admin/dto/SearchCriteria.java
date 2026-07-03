@@ -9,8 +9,8 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemSearchResultDTO {
-    private String id;
-    private String label;
-    private String subLabel;
+public class SearchCriteria {
+    private String field;
+    private SearchOperator operator;
+    private String value;
 }

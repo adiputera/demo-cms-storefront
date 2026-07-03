@@ -39,7 +39,8 @@ A full-stack, Catalog-Aware Headless CMS demonstrating **runtime-driven page com
 
 - **Multi-Version Catalog System (STAGED vs ONLINE)**: Content is isolated using a Catalog Aware schema. Editors work within a STAGED environment, ensuring work-in-progress content is invisible to customers. An automated, reflection-based deep copy synchronizes approved pages to the ONLINE storefront catalog.
 - **Granular Sync Status Tracking**: All catalog-aware entities utilize a robust `syncVersion` strategy. The system intelligently computes and exposes `SYNCED`, `OUT_OF_SYNC`, and `NOT_SYNCED` statuses at runtime, allowing editors to selectively synchronize individual items or entire catalogs without relying on fragile timestamp comparisons.
-- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend via reflection (`@CmsComponent`) and dynamically renders input fields (strings, rich textareas, checkboxes, searchable product selectors, and drag-and-drop image uploaders). This completely eliminates hardcoded component form code in the frontend.
+- **Polymorphic Domain Modeling & Search (`ItemModel`)**: All domain entities (`Catalog`, `Product`, `Article`, `Event`) extend an abstract `@MappedSuperclass` (`ItemModel`), standardizing primary keys, creation/update timestamps, and lifecycle hooks. A unified `toItemSearchResultDTO()` polymorphic mapping powers a single, schema-agnostic search endpoint (`POST /api/cms/items/{type}/search`) across the entire CMS.
+- **Dynamic Schema-Driven Form Generation**: The CMS Admin panel fetches component schemas from the backend via reflection (`@CmsComponent`) and dynamically renders input fields (strings, rich textareas, checkboxes, searchable product selectors, and drag-and-drop image uploaders). It features a robust item lookup dialog with real-time state deduplication across catalog versions and dynamic operators (`CONTAINS`, `EQUALS`, `GREATER_THAN`, `LESS_THAN`) constrained by field type.
 - **Next.js Proxy Media Uploads**: Simplifies media management by utilizing Next.js API `rewrites`. Images uploaded via the CMS are proxied securely to the backend API and served seamlessly through native relative paths (`/uploads/*`), eliminating CORS issues and broken image previews without configuring an external CDN.
 - **Maintainable & Customizable Product Details**: Product detail pages (`/products/[code]`) are mapped to a CMS page layout (using `/products/detail` as the template). This allows editors to place any components (banners, carousels, text blocks) around the product info, and the storefront binds the loaded product context down to child components at runtime.
 - **Separate Read & Write Services**: 
@@ -52,9 +53,9 @@ A full-stack, Catalog-Aware Headless CMS demonstrating **runtime-driven page com
 
 ### Backend
 - **Java 25** with **Spring Boot 4.0**
-- **Maven** multi-module project structure
+- **Maven** multi-module project structure (`shared-entities`, `cms-backend`, `storefront-backend`)
 - **Spring Data JPA** with **Hibernate 7**
-- **Flyway** for database migration schema management
+- **Flyway** (`spring-boot-starter-flyway` with baseline auto-configuration) for schema migrations
 - **PostgreSQL 16** & **Redis 7**
 
 ### Frontend
@@ -102,6 +103,7 @@ docker compose up -d --build
 ### CMS Administrative Write API (Port 8081)
 - `GET /api/cms/pages`: List all STAGED pages along with their real-time sync statuses.
 - `POST /api/cms/pages`: Create a new STAGED page.
+- `POST /api/cms/items/{type}/search`: Query items of a given type with dynamic search criteria (supports `CONTAINS`, `EQUALS`, `GREATER_THAN`, `LESS_THAN` operators).
 - `POST /api/sync/{catalogId}`: Deep copy and publish all STAGED content to the ONLINE catalog.
 - `POST /api/sync/item/{itemId}`: Granular, single-item synchronization from STAGED to ONLINE.
 - `GET /api/cms/components/types`: Get list of registered, reflection-discovered component types.
