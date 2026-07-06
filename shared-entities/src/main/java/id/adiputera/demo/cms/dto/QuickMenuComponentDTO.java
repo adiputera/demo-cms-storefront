@@ -7,6 +7,11 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Quick Menu Component D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor

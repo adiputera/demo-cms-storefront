@@ -1,7 +1,7 @@
 package id.adiputera.demo.cms.entity;
 
-import java.math.BigDecimal;
-
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -11,14 +11,19 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import id.adiputera.demo.cms.annotation.CmsSearchable;
-import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
+/**
+ * Product class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(name = "products", 
     indexes = {
@@ -33,15 +38,15 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsSearchable(name = "name", displayName = "Product Name", type = "string")
-@CmsSearchable(name = "code", displayName = "Product Code", type = "string")
 public class Product extends CatalogAwareModel {
 
+    @CmsField(displayName = "Product Code", searchable = true, order = 1)
     @NotBlank(message = "Product code is required")
     @Size(max = 100)
     @Column(nullable = false)
     private String code;
 
+    @CmsField(displayName = "Product Name", searchable = true, order = 2)
     @NotBlank(message = "Product name is required")
     @Size(max = 255)
     @Column(nullable = false)
@@ -51,6 +56,7 @@ public class Product extends CatalogAwareModel {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @CmsField(displayName = "Price", type = "number", searchable = true, order = 3)
     @NotNull(message = "Price is required")
     @Positive(message = "Price must be positive")
     @Column(nullable = false, precision = 10, scale = 2)
@@ -59,11 +65,23 @@ public class Product extends CatalogAwareModel {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    /**
+     * Gets the synchronization key for catalog aware model.
+     *
+     * @see CatalogAwareModel#getSyncKey()
+     * @return The product code as sync key.
+     */
     @Override
     public String getSyncKey() {
         return this.code;
     }
 
+    /**
+     * Converts the entity to an item search result DTO.
+     *
+     * @see CatalogAwareModel#toItemSearchResultDTO()
+     * @return The item search result DTO.
+     */
     @Override
     public ItemSearchResultDTO toItemSearchResultDTO() {
         return new ItemSearchResultDTO(getCode(), getName(), getCode() + " - $" + getPrice());

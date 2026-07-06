@@ -5,6 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Item Search Result D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @Builder
 @NoArgsConstructor

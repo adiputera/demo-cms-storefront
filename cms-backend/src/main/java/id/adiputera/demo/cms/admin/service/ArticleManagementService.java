@@ -13,6 +13,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Article Management Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

@@ -1,6 +1,7 @@
 package id.adiputera.demo.cms.entity;
 
-import id.adiputera.demo.cms.annotation.CmsSearchable;
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
@@ -12,9 +13,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
+
 import java.util.UUID;
 
+/**
+ * Article class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(name = "articles")
 @Getter
@@ -22,15 +28,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsSearchable(name = "title", displayName = "Title", type = "string")
-@CmsSearchable(name = "slug", displayName = "Slug", type = "string")
 public class Article extends CatalogAwareModel {
 
+    @CmsField(displayName = "Title", searchable = true, order = 1)
     @NotBlank(message = "Title is required")
     @Size(max = 255)
     @Column(nullable = false)
     private String title;
 
+    @CmsField(displayName = "Slug", searchable = true, order = 2)
     @NotBlank(message = "Slug is required")
     @Size(max = 255)
     @Column(nullable = false)

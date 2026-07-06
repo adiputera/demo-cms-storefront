@@ -7,6 +7,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Create Slot Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

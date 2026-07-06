@@ -1,13 +1,13 @@
 package id.adiputera.demo.cms.admin.service;
 
+import id.adiputera.demo.cms.admin.exception.DuplicateResourceException;
+import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
+import id.adiputera.demo.cms.admin.repository.CatalogRepository;
+import id.adiputera.demo.cms.admin.repository.ProductRepository;
 import id.adiputera.demo.cms.dto.ProductDTO;
-import id.adiputera.demo.cms.entity.Product;
 import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.CatalogVersion;
-import id.adiputera.demo.cms.admin.repository.ProductRepository;
-import id.adiputera.demo.cms.admin.repository.CatalogRepository;
-import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
-import id.adiputera.demo.cms.admin.exception.DuplicateResourceException;
+import id.adiputera.demo.cms.entity.Product;
 import id.adiputera.demo.cms.mapper.EntityMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Product Management Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

@@ -1,16 +1,19 @@
 package id.adiputera.demo.cms.admin.repository;
 
+import id.adiputera.demo.cms.entity.Catalog;
+import id.adiputera.demo.cms.entity.Page;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
-import id.adiputera.demo.cms.entity.Page;
-import id.adiputera.demo.cms.entity.Catalog;
-import org.springframework.data.repository.query.Param;
-
+/**
+ * Page Repository interface.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Repository
 public interface PageRepository extends CatalogAwareRepository<Page> {
     

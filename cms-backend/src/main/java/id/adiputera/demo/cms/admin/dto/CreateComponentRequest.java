@@ -1,18 +1,18 @@
 package id.adiputera.demo.cms.admin.dto;
 
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Create Component Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

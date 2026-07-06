@@ -15,6 +15,11 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Cache Config class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Configuration
 @EnableCaching
 public class CacheConfig {

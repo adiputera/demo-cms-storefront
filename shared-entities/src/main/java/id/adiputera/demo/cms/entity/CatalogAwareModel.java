@@ -9,6 +9,11 @@ import jakarta.persistence.PreUpdate;
 import lombok.Getter;
 import lombok.Setter;
 
+/**
+ * Catalog Aware Model class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @MappedSuperclass
 @Getter
 @Setter

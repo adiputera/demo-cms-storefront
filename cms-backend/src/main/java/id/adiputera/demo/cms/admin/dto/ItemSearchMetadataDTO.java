@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Item Search Metadata D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @Builder
 @NoArgsConstructor

@@ -3,6 +3,11 @@ package id.adiputera.demo.cms.admin.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+/**
+ * Create Article Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 public class CreateArticleRequest {
     @NotBlank(message = "Title is required")

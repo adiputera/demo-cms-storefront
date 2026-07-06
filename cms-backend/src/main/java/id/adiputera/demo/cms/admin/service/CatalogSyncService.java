@@ -1,5 +1,28 @@
 package id.adiputera.demo.cms.admin.service;
 
+import id.adiputera.demo.cms.admin.repository.CatalogAwareRepository;
+import id.adiputera.demo.cms.admin.repository.CatalogRepository;
+import id.adiputera.demo.cms.entity.Catalog;
+import id.adiputera.demo.cms.entity.CatalogAwareModel;
+import id.adiputera.demo.cms.entity.CatalogVersion;
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.metamodel.Attribute;
+import jakarta.persistence.metamodel.EntityType;
+import jakarta.persistence.metamodel.PluralAttribute;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.BeanWrapperImpl;
+import org.springframework.context.ApplicationContext;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.repository.support.Repositories;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -12,31 +35,11 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
 
-import org.springframework.beans.BeanWrapper;
-import org.springframework.beans.BeanWrapperImpl;
-import org.springframework.context.ApplicationContext;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.support.Repositories;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-
-import id.adiputera.demo.cms.admin.repository.CatalogAwareRepository;
-import id.adiputera.demo.cms.admin.repository.CatalogRepository;
-import id.adiputera.demo.cms.entity.Catalog;
-import id.adiputera.demo.cms.entity.CatalogAwareModel;
-import id.adiputera.demo.cms.entity.CatalogVersion;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.metamodel.Attribute;
-import jakarta.persistence.metamodel.EntityType;
-import jakarta.persistence.metamodel.PluralAttribute;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-
+/**
+ * Catalog Sync Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

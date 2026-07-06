@@ -1,12 +1,16 @@
 package id.adiputera.demo.cms.admin.repository;
 
-import java.util.Optional;
-
-import org.springframework.stereotype.Repository;
-
 import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.Product;
+import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+/**
+ * Product Repository interface.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Repository
 public interface ProductRepository extends CatalogAwareRepository<Product> {
     

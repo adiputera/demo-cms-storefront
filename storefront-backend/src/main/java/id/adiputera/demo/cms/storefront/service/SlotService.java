@@ -13,6 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Slot Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

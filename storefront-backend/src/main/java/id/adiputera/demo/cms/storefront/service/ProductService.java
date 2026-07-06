@@ -2,8 +2,8 @@ package id.adiputera.demo.cms.storefront.service;
 
 import id.adiputera.demo.cms.dto.ProductDTO;
 import id.adiputera.demo.cms.entity.Product;
-import id.adiputera.demo.cms.storefront.exception.ResourceNotFoundException;
 import id.adiputera.demo.cms.mapper.EntityMapper;
+import id.adiputera.demo.cms.storefront.exception.ResourceNotFoundException;
 import id.adiputera.demo.cms.storefront.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * Product Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

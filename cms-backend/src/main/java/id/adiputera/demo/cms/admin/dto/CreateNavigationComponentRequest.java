@@ -3,9 +3,14 @@ package id.adiputera.demo.cms.admin.dto;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+/**
+ * Create Navigation Component Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

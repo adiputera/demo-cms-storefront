@@ -1,5 +1,10 @@
 package id.adiputera.demo.cms.admin.exception;
 
+/**
+ * Duplicate Resource Exception class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 public class DuplicateResourceException extends RuntimeException {
     public DuplicateResourceException(String message) {
         super(message);

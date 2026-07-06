@@ -1,5 +1,10 @@
 package id.adiputera.demo.cms.storefront.exception;
 
+/**
+ * Resource Not Found Exception class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 public class ResourceNotFoundException extends RuntimeException {
     public ResourceNotFoundException(String message) {
         super(message);

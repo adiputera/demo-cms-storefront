@@ -2,7 +2,6 @@ package id.adiputera.demo.cms.dto;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -10,6 +9,11 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Component D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @SuperBuilder
 @NoArgsConstructor

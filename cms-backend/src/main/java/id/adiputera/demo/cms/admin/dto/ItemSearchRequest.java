@@ -7,6 +7,11 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Item Search Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @Builder
 @NoArgsConstructor

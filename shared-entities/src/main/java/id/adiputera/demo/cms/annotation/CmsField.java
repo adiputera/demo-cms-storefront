@@ -12,7 +12,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CmsField {
     String displayName();
-    String type() default "string"; // e.g., "string", "text", "boolean", "array_string"
+    String type() default "string"; // e.g., "string", "text", "boolean", "array_string", "number"
     boolean required() default false;
     String placeholder() default "";
+    boolean searchable() default false;
+    int order() default 1;
 }

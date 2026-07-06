@@ -70,7 +70,7 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
 
   const handleDeleteSlot = async (slotId: number) => {
     if (!confirm('Delete this slot and all its components?')) return;
-    
+
     try {
       await cmsApiClient.deleteSlot(slotId);
       await loadPageData();
@@ -106,7 +106,7 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
 
   const handleDeleteComponent = async (slotId: number, id: number) => {
     if (!confirm('Remove this component from the slot?')) return;
-    
+
     try {
       await cmsApiClient.removeComponentFromSlot(slotId, id);
       await loadPageData();
@@ -121,7 +121,7 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
 
     const componentIndex = slot.components.findIndex(c => c.id === componentId);
     const newOrder = direction === 'up' ? componentIndex - 1 : componentIndex + 1;
-    
+
     if (newOrder < 0 || newOrder >= slot.components.length) return;
 
     try {
@@ -468,7 +468,7 @@ function ComponentFormModal({
   const [uid, setUid] = useState(component?.uid || '');
   const [name, setName] = useState(component?.name || '');
   const [sortOrder, setSortOrder] = useState(component?.sortOrder || 0);
-  
+
   const [fields, setFields] = useState<any>({});
   const [schema, setSchema] = useState<any>(null);
   const [loadingSchema, setLoadingSchema] = useState(true);
@@ -507,9 +507,9 @@ function ComponentFormModal({
         setLoadingSchema(true);
         const schemaData = await cmsApiClient.getComponentSchema(type);
         setSchema(schemaData);
-        
+
         const newMetadata: Record<string, any> = {};
-        
+
         // Initialize fields from component values or schema defaults
         const initialFields: any = {};
         if (schemaData && schemaData.fields) {
@@ -523,7 +523,7 @@ function ComponentFormModal({
               } else {
                 initialFields[field.name] = typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : (Array.isArray(val) ? val : []);
               }
-              
+
               const itemType = field.type.split(':')[1];
               if (!newMetadata[itemType]) {
                 try {
@@ -579,7 +579,7 @@ function ComponentFormModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Parse form values based on schema field types
     const parsedFields: any = {};
     if (schema && schema.fields) {
@@ -600,7 +600,7 @@ function ComponentFormModal({
         }
       });
     }
-    
+
     const baseData = {
       uid,
       name,
@@ -694,7 +694,7 @@ function ComponentFormModal({
                       <option value="EQUALS">Equals</option>
                       {metaField.type === 'number' && (
                         <>
-                          <option value="GREATER_THAN">Greater Than</option>
+                          <option value="MORE_THAN">More Than</option>
                           <option value="LESS_THAN">Less Than</option>
                         </>
                       )}
@@ -720,42 +720,42 @@ function ComponentFormModal({
                     />
                   </div>
                 ))}
-                
+
                 <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-2 bg-gray-50">
                   {(!searchResults[field.type.split(':')[1]] || searchResults[field.type.split(':')[1]].length === 0) && (
                     <p className="text-sm text-gray-500">No items found.</p>
                   )}
                   {searchResults[field.type.split(':')[1]]?.map((item: any, idx: number) => {
-                      const isMultiple = field.type.startsWith('multiple_items:');
-                      const isChecked = isMultiple 
-                          ? (fields[field.name] || []).includes(item.id)
-                          : fields[field.name] === item.id;
-                      return (
-                        <label key={`${item.id}-${idx}`} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
-                          <input
-                            type={isMultiple ? "checkbox" : "radio"}
-                            name={`field-${field.name}`}
-                            checked={isChecked}
-                            onChange={(e) => {
-                              if (isMultiple) {
-                                const currentSelected = fields[field.name] || [];
-                                if (e.target.checked) {
-                                  setFields({ ...fields, [field.name]: [...currentSelected, item.id] });
-                                } else {
-                                  setFields({ ...fields, [field.name]: currentSelected.filter((c: string) => c !== item.id) });
-                                }
+                    const isMultiple = field.type.startsWith('multiple_items:');
+                    const isChecked = isMultiple
+                      ? (fields[field.name] || []).includes(item.id)
+                      : fields[field.name] === item.id;
+                    return (
+                      <label key={`${item.id}-${idx}`} className="flex items-start space-x-3 cursor-pointer p-1 hover:bg-gray-100 rounded">
+                        <input
+                          type={isMultiple ? "checkbox" : "radio"}
+                          name={`field-${field.name}`}
+                          checked={isChecked}
+                          onChange={(e) => {
+                            if (isMultiple) {
+                              const currentSelected = fields[field.name] || [];
+                              if (e.target.checked) {
+                                setFields({ ...fields, [field.name]: [...currentSelected, item.id] });
                               } else {
-                                setFields({ ...fields, [field.name]: item.id });
+                                setFields({ ...fields, [field.name]: currentSelected.filter((c: string) => c !== item.id) });
                               }
-                            }}
-                            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                          />
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{item.label}</p>
-                            <p className="text-xs text-gray-500">{item.subLabel}</p>
-                          </div>
-                        </label>
-                      );
+                            } else {
+                              setFields({ ...fields, [field.name]: item.id });
+                            }
+                          }}
+                          className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{item.label}</p>
+                          <p className="text-xs text-gray-500">{item.subLabel}</p>
+                        </div>
+                      </label>
+                    );
                   })}
                 </div>
               </div>
@@ -808,7 +808,7 @@ function ComponentFormModal({
               )}
             </select>
           </div>
-          
+
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">UID (Unique Identifier)</label>
             <input

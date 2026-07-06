@@ -6,6 +6,11 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+/**
+ * Cms Backend Application class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @SpringBootApplication(scanBasePackages = {"id.adiputera.demo.cms.admin", "id.adiputera.demo.cms.mapper"})
 @EntityScan(basePackages = "id.adiputera.demo.cms.entity")
 @EnableJpaRepositories(basePackages = "id.adiputera.demo.cms.admin.repository")

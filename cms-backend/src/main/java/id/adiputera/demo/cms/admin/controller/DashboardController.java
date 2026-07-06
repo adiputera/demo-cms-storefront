@@ -1,19 +1,25 @@
 package id.adiputera.demo.cms.admin.controller;
 
-import java.util.Map;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
+import id.adiputera.demo.cms.admin.repository.CatalogRepository;
+import id.adiputera.demo.cms.admin.repository.ComponentRepository;
 import id.adiputera.demo.cms.admin.repository.PageRepository;
 import id.adiputera.demo.cms.admin.repository.ProductRepository;
-import id.adiputera.demo.cms.admin.repository.ComponentRepository;
-import id.adiputera.demo.cms.admin.repository.CatalogRepository;
 import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.CatalogVersion;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
+/**
+ * Dashboard Controller class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @RestController
 @RequestMapping("/api/cms/dashboard")
 @RequiredArgsConstructor

@@ -4,6 +4,11 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Web Config class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 

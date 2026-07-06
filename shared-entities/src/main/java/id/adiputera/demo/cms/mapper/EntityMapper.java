@@ -1,8 +1,34 @@
 package id.adiputera.demo.cms.mapper;
 
-import id.adiputera.demo.cms.dto.*;
-import id.adiputera.demo.cms.entity.*;
-import id.adiputera.demo.cms.entity.component.*;
+import id.adiputera.demo.cms.dto.BannerComponentDTO;
+import id.adiputera.demo.cms.dto.BreadcrumbDTO;
+import id.adiputera.demo.cms.dto.ComponentDTO;
+import id.adiputera.demo.cms.dto.LatestArticleComponentDTO;
+import id.adiputera.demo.cms.dto.LatestEventComponentDTO;
+import id.adiputera.demo.cms.dto.NavigationComponentDTO;
+import id.adiputera.demo.cms.dto.PageDTO;
+import id.adiputera.demo.cms.dto.ParagraphComponentDTO;
+import id.adiputera.demo.cms.dto.ProductCarouselComponentDTO;
+import id.adiputera.demo.cms.dto.ProductDTO;
+import id.adiputera.demo.cms.dto.ProductDetailComponentDTO;
+import id.adiputera.demo.cms.dto.QuickMenuComponentDTO;
+import id.adiputera.demo.cms.dto.SlotDTO;
+import id.adiputera.demo.cms.dto.TopEventComponentDTO;
+import id.adiputera.demo.cms.dto.TrendingArticleComponentDTO;
+import id.adiputera.demo.cms.entity.ComponentType;
+import id.adiputera.demo.cms.entity.Page;
+import id.adiputera.demo.cms.entity.Product;
+import id.adiputera.demo.cms.entity.Slot;
+import id.adiputera.demo.cms.entity.component.BannerComponent;
+import id.adiputera.demo.cms.entity.component.LatestArticleComponent;
+import id.adiputera.demo.cms.entity.component.LatestEventComponent;
+import id.adiputera.demo.cms.entity.component.NavigationComponent;
+import id.adiputera.demo.cms.entity.component.ParagraphComponent;
+import id.adiputera.demo.cms.entity.component.ProductCarouselComponent;
+import id.adiputera.demo.cms.entity.component.ProductDetailComponent;
+import id.adiputera.demo.cms.entity.component.QuickMenuComponent;
+import id.adiputera.demo.cms.entity.component.TopEventComponent;
+import id.adiputera.demo.cms.entity.component.TrendingArticleComponent;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -10,6 +36,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Entity Mapper class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Component
 public class EntityMapper {
 

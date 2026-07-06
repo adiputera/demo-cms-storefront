@@ -1,11 +1,17 @@
 package id.adiputera.demo.cms.admin.dto;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+/**
+ * Create Product Carousel Component Request class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -1,15 +1,19 @@
 package id.adiputera.demo.cms.admin.dto;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import id.adiputera.demo.cms.dto.ComponentDTO;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Slot Response class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

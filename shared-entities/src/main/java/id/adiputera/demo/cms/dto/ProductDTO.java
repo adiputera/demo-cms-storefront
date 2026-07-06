@@ -1,7 +1,5 @@
 package id.adiputera.demo.cms.dto;
 
-import java.math.BigDecimal;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -10,6 +8,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
+/**
+ * Product D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @Builder
 @NoArgsConstructor

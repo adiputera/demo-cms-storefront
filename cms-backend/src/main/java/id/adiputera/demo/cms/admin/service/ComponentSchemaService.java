@@ -1,19 +1,5 @@
 package id.adiputera.demo.cms.admin.service;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.metamodel.EntityType;
-
-import org.springframework.stereotype.Service;
-
 import id.adiputera.demo.cms.admin.dto.ComponentField;
 import id.adiputera.demo.cms.admin.dto.ComponentSchema;
 import id.adiputera.demo.cms.admin.dto.ComponentTypeInfo;
@@ -21,10 +7,25 @@ import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
 import id.adiputera.demo.cms.entity.Component;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.metamodel.EntityType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Component Schema Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

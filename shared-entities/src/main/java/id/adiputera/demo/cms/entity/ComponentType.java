@@ -1,5 +1,10 @@
 package id.adiputera.demo.cms.entity;
 
+/**
+ * Component Type enum.
+ *
+ * @author Yusuf F. Adiputera
+ */
 public enum ComponentType {
     PARAGRAPH,
     BANNER,

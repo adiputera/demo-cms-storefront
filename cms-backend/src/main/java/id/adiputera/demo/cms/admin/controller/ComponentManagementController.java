@@ -1,13 +1,45 @@
 package id.adiputera.demo.cms.admin.controller;
 
-import java.util.List;
-import java.util.Map;
-
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import id.adiputera.demo.cms.admin.dto.ComponentSchema;
+import id.adiputera.demo.cms.admin.dto.ComponentTypeInfo;
+import id.adiputera.demo.cms.admin.dto.CreateBannerComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateLatestArticleComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateLatestEventComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateNavigationComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateParagraphComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateProductCarouselComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateProductDetailComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateQuickMenuComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateTopEventComponentRequest;
+import id.adiputera.demo.cms.admin.dto.CreateTrendingArticleComponentRequest;
+import id.adiputera.demo.cms.admin.dto.ReorderComponentRequest;
+import id.adiputera.demo.cms.admin.exception.BadRequestException;
+import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
+import id.adiputera.demo.cms.admin.repository.ComponentRepository;
+import id.adiputera.demo.cms.admin.repository.SlotRepository;
+import id.adiputera.demo.cms.dto.ComponentDTO;
+import id.adiputera.demo.cms.entity.Component;
+import id.adiputera.demo.cms.entity.Slot;
+import id.adiputera.demo.cms.entity.component.BannerComponent;
+import id.adiputera.demo.cms.entity.component.LatestArticleComponent;
+import id.adiputera.demo.cms.entity.component.LatestEventComponent;
+import id.adiputera.demo.cms.entity.component.NavigationComponent;
+import id.adiputera.demo.cms.entity.component.ParagraphComponent;
+import id.adiputera.demo.cms.entity.component.ProductCarouselComponent;
+import id.adiputera.demo.cms.entity.component.ProductDetailComponent;
+import id.adiputera.demo.cms.entity.component.QuickMenuComponent;
+import id.adiputera.demo.cms.entity.component.TopEventComponent;
+import id.adiputera.demo.cms.entity.component.TrendingArticleComponent;
+import id.adiputera.demo.cms.mapper.EntityMapper;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,49 +48,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
-import id.adiputera.demo.cms.admin.dto.ComponentField;
-import id.adiputera.demo.cms.admin.dto.ComponentSchema;
-import id.adiputera.demo.cms.admin.dto.ComponentTypeInfo;
-import id.adiputera.demo.cms.admin.dto.CreateComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateLatestArticleComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateLatestEventComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateBannerComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateParagraphComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateProductCarouselComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateNavigationComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateQuickMenuComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateProductDetailComponentRequest;
-import id.adiputera.demo.cms.admin.dto.ReorderComponentRequest;
-import id.adiputera.demo.cms.admin.exception.BadRequestException;
-import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
-import id.adiputera.demo.cms.admin.repository.ComponentRepository;
-import id.adiputera.demo.cms.admin.repository.SlotRepository;
-import id.adiputera.demo.cms.admin.dto.CreateTrendingArticleComponentRequest;
-import id.adiputera.demo.cms.admin.dto.CreateTopEventComponentRequest;
+import java.util.List;
+import java.util.Map;
 
-import id.adiputera.demo.cms.dto.ComponentDTO;
-import id.adiputera.demo.cms.entity.Component;
-import id.adiputera.demo.cms.entity.Slot;
-import id.adiputera.demo.cms.entity.component.BannerComponent;
-import id.adiputera.demo.cms.entity.component.NavigationComponent;
-import id.adiputera.demo.cms.entity.component.ParagraphComponent;
-import id.adiputera.demo.cms.entity.component.ProductCarouselComponent;
-import id.adiputera.demo.cms.entity.component.QuickMenuComponent;
-import id.adiputera.demo.cms.entity.component.LatestArticleComponent;
-import id.adiputera.demo.cms.entity.component.LatestEventComponent;
-import id.adiputera.demo.cms.entity.component.ProductDetailComponent;
-import id.adiputera.demo.cms.entity.component.TrendingArticleComponent;
-import id.adiputera.demo.cms.entity.component.TopEventComponent;
-import id.adiputera.demo.cms.mapper.EntityMapper;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Component Management Controller class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @RestController
 @RequestMapping("/api/cms/components")
 @RequiredArgsConstructor

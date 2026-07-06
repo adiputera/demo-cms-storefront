@@ -4,7 +4,6 @@ import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -15,6 +14,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Banner Component class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(name = "banner_components")
 @Getter

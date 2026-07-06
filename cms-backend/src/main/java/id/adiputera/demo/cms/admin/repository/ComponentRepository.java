@@ -1,14 +1,17 @@
 package id.adiputera.demo.cms.admin.repository;
 
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
+import id.adiputera.demo.cms.entity.Catalog;
+import id.adiputera.demo.cms.entity.Component;
 import org.springframework.stereotype.Repository;
 
-import id.adiputera.demo.cms.entity.Component;
-import id.adiputera.demo.cms.entity.Catalog;
+import java.util.List;
 import java.util.Optional;
 
+/**
+ * Component Repository interface.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Repository
 public interface ComponentRepository extends CatalogAwareRepository<Component> {
     List<Component> findAllByCatalog(Catalog catalog);

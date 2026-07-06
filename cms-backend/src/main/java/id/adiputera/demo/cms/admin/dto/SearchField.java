@@ -5,6 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Search Field class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -13,4 +18,5 @@ public class SearchField {
     private String name;
     private String displayName;
     private String type;
+    private int order;
 }

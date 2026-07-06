@@ -1,11 +1,11 @@
 package id.adiputera.demo.cms.admin.service;
 
 import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
-import id.adiputera.demo.cms.admin.repository.EventRepository;
 import id.adiputera.demo.cms.admin.repository.CatalogRepository;
+import id.adiputera.demo.cms.admin.repository.EventRepository;
 import id.adiputera.demo.cms.dto.EventDTO;
-import id.adiputera.demo.cms.entity.Event;
 import id.adiputera.demo.cms.entity.Catalog;
+import id.adiputera.demo.cms.entity.Event;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,6 +13,11 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Event Management Service class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j

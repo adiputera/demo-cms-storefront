@@ -4,12 +4,9 @@ import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,6 +14,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Latest Event Component class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(name = "latest_event_components")
 @Getter

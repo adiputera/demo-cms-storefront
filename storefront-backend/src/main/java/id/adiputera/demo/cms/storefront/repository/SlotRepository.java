@@ -1,14 +1,18 @@
 package id.adiputera.demo.cms.storefront.repository;
 
-import java.util.List;
-
+import id.adiputera.demo.cms.entity.Slot;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import id.adiputera.demo.cms.entity.Slot;
+import java.util.List;
 
+/**
+ * Slot Repository interface.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Repository
 public interface SlotRepository extends JpaRepository<Slot, Long> {
 

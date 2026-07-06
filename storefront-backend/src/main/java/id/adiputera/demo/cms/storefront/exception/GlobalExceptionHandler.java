@@ -13,6 +13,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Global Exception Handler class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {

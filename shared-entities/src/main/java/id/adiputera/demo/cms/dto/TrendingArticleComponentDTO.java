@@ -1,12 +1,17 @@
 package id.adiputera.demo.cms.dto;
 
-import java.util.List;
-
 import id.adiputera.demo.cms.entity.ComponentType;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+
+/**
+ * Trending Article Component D T O class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Getter
 @Setter
 @SuperBuilder

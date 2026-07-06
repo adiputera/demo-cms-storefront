@@ -7,6 +7,11 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
+/**
+ * Storefront Backend Application class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @SpringBootApplication
 @EnableCaching
 @EntityScan(basePackages = "id.adiputera.demo.cms.entity")

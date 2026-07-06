@@ -1,9 +1,15 @@
 package id.adiputera.demo.cms.admin.dto;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.List;
+
+/**
+ * Component Schema class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Getter
 @AllArgsConstructor
 public class ComponentSchema {

@@ -3,6 +3,11 @@ package id.adiputera.demo.cms.admin.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * Component Field class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Getter
 @AllArgsConstructor
 public class ComponentField {

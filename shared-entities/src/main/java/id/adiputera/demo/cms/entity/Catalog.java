@@ -1,5 +1,6 @@
 package id.adiputera.demo.cms.entity;
 
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -9,13 +10,17 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Catalog class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(
     name = "catalogs",

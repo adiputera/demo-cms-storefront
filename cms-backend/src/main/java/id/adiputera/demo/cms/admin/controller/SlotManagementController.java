@@ -1,12 +1,21 @@
 package id.adiputera.demo.cms.admin.controller;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-
+import id.adiputera.demo.cms.admin.dto.CreateSlotRequest;
+import id.adiputera.demo.cms.admin.dto.SlotResponse;
+import id.adiputera.demo.cms.admin.dto.UpdateSlotRequest;
+import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
+import id.adiputera.demo.cms.admin.repository.PageRepository;
+import id.adiputera.demo.cms.admin.repository.SlotRepository;
+import id.adiputera.demo.cms.dto.ComponentDTO;
+import id.adiputera.demo.cms.entity.Page;
+import id.adiputera.demo.cms.entity.Slot;
+import id.adiputera.demo.cms.mapper.EntityMapper;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,23 +24,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
-import id.adiputera.demo.cms.admin.dto.CreateSlotRequest;
-import id.adiputera.demo.cms.admin.dto.SlotResponse;
-import id.adiputera.demo.cms.admin.dto.UpdateSlotRequest;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
-import id.adiputera.demo.cms.admin.repository.PageRepository;
-import id.adiputera.demo.cms.admin.repository.SlotRepository;
-import id.adiputera.demo.cms.dto.ComponentDTO;
-import id.adiputera.demo.cms.entity.Page;
-import id.adiputera.demo.cms.entity.Slot;
-import id.adiputera.demo.cms.mapper.EntityMapper;
-
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Slot Management Controller class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @RestController
 @RequestMapping("/api/cms/slots")
 @RequiredArgsConstructor

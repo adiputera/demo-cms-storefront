@@ -1,6 +1,7 @@
 package id.adiputera.demo.cms.entity;
 
-import id.adiputera.demo.cms.annotation.CmsSearchable;
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.PrePersist;
@@ -12,9 +13,14 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
+
 import java.util.UUID;
 
+/**
+ * Event class.
+ *
+ * @author Yusuf F. Adiputera
+ */
 @Entity
 @Table(name = "events")
 @Getter
@@ -22,16 +28,15 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@CmsSearchable(name = "title", displayName = "Title", type = "string")
-@CmsSearchable(name = "location", displayName = "Location", type = "string")
-@CmsSearchable(name = "slug", displayName = "Slug", type = "string")
 public class Event extends CatalogAwareModel {
 
+    @CmsField(displayName = "Title", searchable = true, order = 1)
     @NotBlank(message = "Title is required")
     @Size(max = 255)
     @Column(nullable = false)
     private String title;
 
+    @CmsField(displayName = "Slug", searchable = true, order = 2)
     @NotBlank(message = "Slug is required")
     @Size(max = 255)
     @Column(nullable = false)
@@ -40,6 +45,7 @@ public class Event extends CatalogAwareModel {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @CmsField(displayName = "Location", searchable = true, order = 3)
     @NotBlank(message = "Location is required")
     @Size(max = 255)
     @Column(nullable = false)
