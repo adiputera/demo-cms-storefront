@@ -204,51 +204,6 @@ curl http://localhost:8080/api/products/macbook-pro
 
 ---
 
-#### Batch Fetch Products
-
-```http
-POST /api/products/batch
-```
-
-**Description:** Fetch multiple products by their codes in a single request.
-
-**Request Body:**
-```json
-{
-  "codes": ["macbook-pro", "iphone-15-pro"]
-}
-```
-
-**Response:** `200 OK`
-```json
-[
-  {
-    "id": 1,
-    "code": "macbook-pro",
-    "name": "MacBook Pro 16\"",
-    "price": 2499.00,
-    "description": "Powerful laptop for professionals",
-    "imageUrl": "https://example.com/macbook.jpg"
-  },
-  {
-    "id": 2,
-    "code": "iphone-15-pro",
-    "name": "iPhone 15 Pro",
-    "price": 999.00,
-    "description": "Latest iPhone with titanium design",
-    "imageUrl": "https://example.com/iphone.jpg"
-  }
-]
-```
-
-**Example:**
-```bash
-curl -X POST http://localhost:8080/api/products/batch \
-  -H "Content-Type: application/json" \
-  -d '{"codes": ["macbook-pro", "iphone-15-pro"]}'
-```
-
----
 
 ## CMS Admin API (Port 8081)
 
@@ -568,70 +523,217 @@ curl -X DELETE http://localhost:8081/api/cms/products/5
 
 ---
 
+### Articles
+
+#### List / Get / Create / Update / Delete Articles
+- `GET /api/cms/articles`: List all STAGED articles.
+- `GET /api/cms/articles/{id}`: Get article by ID.
+- `POST /api/cms/articles`: Create article (`code`, `title`, `summary`, `content`, `author`, `imageUrl`).
+- `PUT /api/cms/articles/{id}`: Update article.
+- `DELETE /api/cms/articles/{id}`: Delete article.
+
+---
+
+### Events
+
+#### List / Get / Create / Update / Delete Events
+- `GET /api/cms/events`: List all STAGED events.
+- `GET /api/cms/events/{id}`: Get event by ID.
+- `POST /api/cms/events`: Create event (`code`, `title`, `description`, `location`, `eventDate`, `imageUrl`).
+- `PUT /api/cms/events/{id}`: Update event.
+- `DELETE /api/cms/events/{id}`: Delete event.
+
+---
+
+### Item Search & Metadata
+
+#### Get Item Search Metadata
+```http
+GET /api/cms/items/{type}/search-metadata
+```
+**Description:** Retrieve searchable fields and allowed operators for dynamic component item selection (types: `product`, `article`, `event`, `page`, `slot`, `component`).
+
+#### Query Searchable Items
+```http
+POST /api/cms/items/{type}/search
+```
+**Request Body:**
+```json
+{
+  "criteria": [
+    {
+      "field": "name",
+      "operator": "CONTAINS",
+      "value": "Pro"
+    }
+  ]
+}
+```
+
+---
+
+### Slot & Component Management
+
+#### Slot Operations
+- `GET /api/cms/slots/page/{pageId}`: Get all slots and components for a page.
+- `GET /api/cms/slots/{id}`: Get slot by ID.
+- `POST /api/cms/slots`: Create slot (`code`, `name`, `pageId`).
+- `PUT /api/cms/slots/{id}`: Update slot name/code.
+- `DELETE /api/cms/slots/{id}`: Delete slot.
+
+#### Component Operations & Linking
+- `POST /api/cms/components`: Create component (polymorphic request body with `type`, `slotId`, `sortOrder`).
+- `POST /api/cms/components/slots/{slotId}/components/{componentId}`: Link existing component to a slot at specific index.
+- `PUT /api/cms/components/{id}`: Update component fields.
+- `PUT /api/cms/components/slots/{slotId}/components/{id}/reorder`: Reorder component in slot (`{"sortOrder": 2}`).
+- `DELETE /api/cms/components/slots/{slotId}/components/{id}`: Remove component from slot without deleting entity.
+- `DELETE /api/cms/components/{id}`: Permanently delete component entity.
+
+---
+
+### Catalog Synchronization
+
+#### Sync Catalog
+```http
+POST /api/sync/{catalogId}
+```
+**Description:** Deep-copy and publish all `STAGED` content to the specified catalog version (e.g., `ONLINE`).
+
+#### Sync Single Item
+```http
+POST /api/sync/item/{entityType}/{itemId}
+```
+**Description:** Publish an individual item (`page`, `slot`, `component`, `product`, `article`, `event`) from STAGED to ONLINE.
+
+---
+
+### Component Schema Discovery & Media
+
+#### Component Types & Schemas
+- `GET /api/cms/components/types`: Returns list of all 10 component type enum strings.
+- `GET /api/cms/components/types/{type}/schema`: Returns reflection-scanned field definitions, types, required flags, and item picker metadata for dynamic CMS forms.
+
+#### Upload Media
+- `POST /api/cms/media/upload`: Upload multipart file. Returns relative URL (e.g., `/uploads/image.png`).
+
+---
+
 ## Component Types
 
-### Banner Component
-
+### 1. Banner Component (`BANNER`)
 ```json
 {
   "type": "BANNER",
-  "position": 0,
+  "uid": "hero-banner-1",
+  "name": "Hero Banner",
   "title": "Welcome to Our Store",
   "subtitle": "Shop the latest products",
   "imageUrl": "https://example.com/banner.jpg",
+  "altText": "Store Banner",
   "ctaText": "Shop Now",
   "ctaUrl": "/products"
 }
 ```
 
-### Paragraph Component
-
+### 2. Paragraph Component (`PARAGRAPH`)
 ```json
 {
   "type": "PARAGRAPH",
-  "position": 0,
+  "uid": "about-paragraph-1",
+  "name": "About Paragraph",
   "title": "About Us",
   "content": "<p>We are a leading retailer...</p>"
 }
 ```
 
-### Product Carousel Component
-
+### 3. Product Carousel Component (`PRODUCT_CAROUSEL`)
 ```json
 {
   "type": "PRODUCT_CAROUSEL",
-  "position": 0,
+  "uid": "featured-products-1",
+  "name": "Featured Products",
   "title": "Featured Products",
-  "productCodes": ["macbook-pro", "iphone-15-pro"]
+  "productCodes": "macbook-pro,iphone-15-pro"
 }
 ```
 
-### Navigation Component
-
+### 4. Navigation Component (`NAVIGATION`)
 ```json
 {
   "type": "NAVIGATION",
-  "position": 0,
-  "links": [
-    {"label": "Home", "url": "/", "icon": "home"},
-    {"label": "Products", "url": "/products", "icon": "shopping-bag"}
-  ]
+  "uid": "nav-link-1",
+  "name": "Home Link",
+  "displayText": "Home",
+  "url": "/",
+  "icon": "home"
 }
 ```
 
-### Quick Menu Component
-
+### 5. Quick Menu Component (`QUICK_MENU`)
 ```json
 {
   "type": "QUICK_MENU",
-  "position": 0,
-  "tiles": [
-    {
-      "title": "New Arrivals",
-      "imageUrl": "https://example.com/new.jpg",
-      "linkUrl": "/new-arrivals"
-    }
-  ]
+  "uid": "quick-menu-1",
+  "name": "New Arrivals Tile",
+  "title": "New Arrivals",
+  "imageUrl": "https://example.com/new.jpg",
+  "url": "/new-arrivals"
+}
+```
+
+### 6. Product Detail Component (`PRODUCT_DETAIL`)
+```json
+{
+  "type": "PRODUCT_DETAIL",
+  "uid": "prod-detail-1",
+  "name": "Product Detail Layout",
+  "title": "Product Overview",
+  "showPrice": true,
+  "showDescription": true
+}
+```
+
+### 7. Latest Article Component (`LATEST_ARTICLE`)
+```json
+{
+  "type": "LATEST_ARTICLE",
+  "uid": "latest-articles-1",
+  "name": "Latest Tech News",
+  "title": "Latest Articles",
+  "articleCount": 4
+}
+```
+
+### 8. Trending Article Component (`TRENDING_ARTICLE`)
+```json
+{
+  "type": "TRENDING_ARTICLE",
+  "uid": "trending-articles-1",
+  "name": "Curated Trending Articles",
+  "title": "Trending Now",
+  "articleIds": "1,2,3"
+}
+```
+
+### 9. Latest Event Component (`LATEST_EVENT`)
+```json
+{
+  "type": "LATEST_EVENT",
+  "uid": "latest-events-1",
+  "name": "Upcoming Tech Events",
+  "title": "Events & Webinars",
+  "eventIds": "1,2"
+}
+```
+
+### 10. Top Event Component (`TOP_EVENT`)
+```json
+{
+  "type": "TOP_EVENT",
+  "uid": "top-event-1",
+  "name": "Featured Conference",
+  "title": "Don't Miss Out",
+  "eventId": "1"
 }
 ```
 

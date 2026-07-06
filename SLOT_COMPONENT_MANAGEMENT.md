@@ -2,147 +2,166 @@
 
 ## Overview
 
-This document describes the slot and component management system that allows content editors to manage page content through the CMS Admin UI.
+This document describes the slot and component management system that allows content editors to compose, link, reorder, and manage page content through the CMS Admin UI. The architecture leverages a **Catalog-Aware** multi-version schema (`STAGED` vs `ONLINE`), dynamic reflection-based schema discovery, and a polymorphic domain item search engine.
+
+---
 
 ## Architecture
 
 ### Backend Components
 
-#### Entities
-- **Component.java** - Abstract base entity with JOINED inheritance strategy
-  - Fields: `id`, `uid`, `name`, `type`, `sortOrder`, `slot`, `createdAt`, `updatedAt`
-  - Subclasses: BannerComponent, ParagraphComponent, ProductCarouselComponent, NavigationComponent, QuickMenuComponent
-  - `type` field stores component type as String in database
-  - `getType()` abstract method returns ComponentType enum
+All backend Java classes reside under the base package: **`id.adiputera.demo.cms`**.
 
-- **Slot.java** - Content slot entity
-  - Fields: `id`, `code`, `name`, `page`, `components` (OneToMany)
+#### Entities
+
+- **`Component.java`** - Abstract base entity with `JOINED` inheritance strategy extending `CatalogAwareModel`.
+  - Core Fields: `id`, `uid`, `name`, `type` (String, length 50), `catalogId`, `createdAt`, `updatedAt`.
+  - Subclasses (10 total):
+    - `BannerComponent` (`BANNER`)
+    - `ParagraphComponent` (`PARAGRAPH`)
+    - `ProductCarouselComponent` (`PRODUCT_CAROUSEL`)
+    - `NavigationComponent` (`NAVIGATION`)
+    - `QuickMenuComponent` (`QUICK_MENU`)
+    - `ProductDetailComponent` (`PRODUCT_DETAIL`)
+    - `LatestArticleComponent` (`LATEST_ARTICLE`)
+    - `TrendingArticleComponent` (`TRENDING_ARTICLE`)
+    - `LatestEventComponent` (`LATEST_EVENT`)
+    - `TopEventComponent` (`TOP_EVENT`)
+  - `getType()` abstract method returns the corresponding `ComponentType` enum.
+  - Components act as reusable, catalog-aware content blocks that can be linked to one or more slots.
+
+- **`Slot.java`** - Content slot entity extending `CatalogAwareModel`.
+  - Fields: `id`, `code`, `name`, `page` (`@ManyToOne`), `catalogId`, `components` (`@ManyToMany`).
+  - **Component Ordering**: Uses an `@OrderColumn(name = "sort_order")` on a join table (`slot_components`). This allows components to maintain a specific sequence within a slot while remaining independent entities.
 
 #### DTOs
-- **CreateSlotRequest** - Request DTO for creating slots
-  - Fields: `code` (required), `name` (required), `pageId` (required)
-  
-- **UpdateSlotRequest** - Request DTO for updating slots
-  - Fields: `code` (required), `name` (required)
-  
-- **SlotResponse** - Response DTO with slot and component details
-  - Fields: `id`, `code`, `name`, `pageId`, `components` (List<ComponentDTO>)
-  
-- **CreateComponentRequest** - Polymorphic request DTO using Jackson @JsonTypeInfo/@JsonSubTypes
-  - Base fields: `uid`, `name`, `type`, `sortOrder`, `slotId`
-  - Subclasses: CreateBannerComponentRequest, CreateParagraphComponentRequest, CreateProductCarouselComponentRequest, CreateNavigationComponentRequest, CreateQuickMenuComponentRequest
-  
-- **ReorderComponentRequest** - Request DTO for component reordering
-  - Fields: `sortOrder` (required)
+
+- **`CreateSlotRequest`**: Request DTO for creating slots (`code`, `name`, `pageId`).
+- **`UpdateSlotRequest`**: Request DTO for updating slots (`code`, `name`).
+- **`SlotResponse`**: Response DTO containing slot details and ordered component list (`id`, `code`, `name`, `pageId`, `components`).
+- **`CreateComponentRequest`**: Polymorphic request DTO mapped via Jackson `@JsonTypeInfo` and `@JsonSubTypes`.
+  - Base fields: `uid`, `name`, `type`, `sortOrder` (optional index for slot placement), `slotId` (optional target slot ID).
+  - Subclasses:
+    - `CreateBannerComponentRequest`
+    - `CreateParagraphComponentRequest`
+    - `CreateProductCarouselComponentRequest`
+    - `CreateNavigationComponentRequest`
+    - `CreateQuickMenuComponentRequest`
+    - `CreateProductDetailComponentRequest`
+    - `CreateLatestArticleComponentRequest`
+    - `CreateTrendingArticleComponentRequest`
+    - `CreateLatestEventComponentRequest`
+    - `CreateTopEventComponentRequest`
+- **`ReorderComponentRequest`**: Request DTO for changing a component's position within a slot (`sortOrder`).
 
 #### Controllers
 
-##### SlotManagementController
-REST endpoints for slot CRUD operations:
-- **GET** `/api/cms/slots/page/{pageId}` - Get all slots for a page
-- **GET** `/api/cms/slots/{id}` - Get slot with components by ID
-- **POST** `/api/cms/slots` - Create new slot
-- **PUT** `/api/cms/slots/{id}` - Update slot
-- **DELETE** `/api/cms/slots/{id}` - Delete slot
+##### `SlotManagementController` (`/api/cms/slots`)
+REST endpoints for slot operations in the `STAGED` catalog:
+- **GET** `/api/cms/slots/page/{pageId}`: Get all slots and components for a page.
+- **GET** `/api/cms/slots/{id}`: Get slot by ID.
+- **POST** `/api/cms/slots`: Create new slot.
+- **PUT** `/api/cms/slots/{id}`: Update slot properties.
+- **DELETE** `/api/cms/slots/{id}`: Delete slot.
+All mutation endpoints use `@CacheEvict(value = {"page", "slot"}, allEntries = true)` to invalidate caches.
 
-All mutation operations include `@CacheEvict(value = {"page", "slot"}, allEntries = true)` to invalidate caches.
-
-##### ComponentManagementController
-REST endpoints for component CRUD with polymorphic handling:
-- **POST** `/api/cms/components` - Create new component (polymorphic)
-- **PUT** `/api/cms/components/{id}` - Update component
-- **PUT** `/api/cms/components/{id}/reorder` - Reorder component within slot
-- **DELETE** `/api/cms/components/{id}` - Delete component
-
-The controller uses Jackson ObjectMapper for polymorphic deserialization and manual type-specific field handling.
+##### `ComponentManagementController` (`/api/cms/components`)
+REST endpoints for polymorphic component lifecycle, linking, and schema discovery:
+- **POST** `/api/cms/components`: Create component. If `slotId` is provided, automatically inserts the component into `slot.getComponents()` at `sortOrder`.
+- **POST** `/api/cms/components/slots/{slotId}/components/{componentId}`: Link an existing component to a slot at an optional index (`{"sortOrder": index}`).
+- **PUT** `/api/cms/components/{id}`: Update component properties (prevents changing component `type`).
+- **PUT** `/api/cms/components/slots/{slotId}/components/{id}/reorder`: Move a component to a new index within the slot's ordered list.
+- **DELETE** `/api/cms/components/slots/{slotId}/components/{id}`: Unlink and remove a component from a slot without deleting the component entity.
+- **DELETE** `/api/cms/components/{id}`: Permanently delete a component entity.
+- **GET** `/api/cms/components/types`: Get all 10 registered component type enum strings.
+- **GET** `/api/cms/components/types/{type}/schema`: Get reflection-generated form schemas for dynamic UI rendering.
 
 #### Repositories
-- **SlotRepository** - JPA repository with custom query `findByIdWithComponents` using @EntityGraph for eager loading
-- **ComponentRepository** - JPA repository for component entities
+- **`SlotRepository`**: JPA repository featuring `@EntityGraph` eager fetching (`findByIdWithComponents`).
+- **`ComponentRepository`**: JPA repository handling polymorphic component entity persistence and catalog queries.
+
+---
 
 ### Frontend Components
 
-#### API Client
-**frontend/src/lib/cms-api-client.ts** - Singleton API client for CMS backend (port 8081)
-- Slot methods: `getSlotsByPage`, `getSlot`, `createSlot`, `updateSlot`, `deleteSlot`
-- Component methods: `createComponent`, `updateComponent`, `reorderComponent`, `deleteComponent`
+#### API Client (`cms-frontend/src/lib/cms-api-client.ts`)
+Singleton API client communicating with the CMS backend (Port 8081):
+- **Slot Methods**: `getSlotsByPage`, `getSlot`, `createSlot`, `updateSlot`, `deleteSlot`.
+- **Component Methods**: `createComponent`, `updateComponent`, `reorderComponent`, `deleteComponent`, `removeComponentFromSlot`, `linkComponentToSlot`.
+- **Schema & Search Methods**: `getComponentTypes`, `getComponentSchema`, `searchItems`, `getItemSearchMetadata`.
 
-#### UI Pages
+#### UI Management Pages (`cms-frontend/src/app/cms/pages/[id]/manage/page.tsx`)
+Comprehensive interactive interface for page content editing:
+- **Dynamic Schema-Driven Forms (`ComponentFormModal`)**: Fetches field definitions from `/api/cms/components/types/{type}/schema` and dynamically renders inputs (text strings, rich textareas, boolean switches, numbers, image uploaders, and item search selectors).
+- **Interactive Item Search Picker**: Integrates `/api/cms/items/{type}/search` to allow content editors to search and pick products, articles, or events when configuring components like `PRODUCT_CAROUSEL`, `TRENDING_ARTICLE`, or `LATEST_EVENT`.
+- **Real-Time Sync Status Badges**: Displays whether each slot and component is `SYNCED`, `OUT_OF_SYNC`, or `NOT_SYNCED` relative to the `ONLINE` catalog.
+- **Component Linking & Reordering**: Supports adding new components, linking existing shared components, reordering items within a slot, and unlinking or permanently deleting components.
 
-##### Page Management UI
-**frontend/src/app/cms/pages/[id]/manage/page.tsx**
-- Comprehensive page content management interface
-- Features:
-  - Slot creation and management
-  - Component CRUD operations
-  - Drag-and-drop reordering (visual concept)
-  - Component type selection (Banner, Paragraph, Product Carousel, Navigation, Quick Menu)
-  - Type-specific form fields
-  - Real-time preview
-  - Delete confirmations
-  - Error handling
-
-Components:
-- **PageManagementPage** - Main page component
-- **SlotFormModal** - Modal for creating/editing slots
-- **ComponentFormModal** - Modal for creating/editing components with polymorphic form fields
-- **ComponentPreview** - Visual preview of component content
-
-##### Pages List
-**frontend/src/app/cms/pages/page.tsx**
-- Updated to include "Manage Content" link for each page
-- Three actions per page: View, Manage Content, Edit Page
+---
 
 ## Data Model
 
-### Component Types
-The system supports five component types:
+### Component Types & Fields
 
-1. **BANNER** - Hero banner with image and call-to-action
+The system supports 10 distinct component types:
+
+1. **`BANNER`** (Hero Banner)
    - Fields: `imageUrl`, `altText`, `title`, `subtitle`, `ctaText`, `ctaUrl`
-
-2. **PARAGRAPH** - Rich text content
-   - Fields: `title`, `content`
-
-3. **PRODUCT_CAROUSEL** - Displays products
-   - Fields: `title`, `productCodes` (array)
-
-4. **NAVIGATION** - Single navigation link
+2. **`PARAGRAPH`** (Rich Text Content)
+   - Fields: `title`, `content` (HTML supported)
+3. **`PRODUCT_CAROUSEL`** (Product Grid Carousel)
+   - Fields: `title`, `productCodes` (Comma-separated list of product codes)
+4. **`NAVIGATION`** (Single Navigation Link)
    - Fields: `displayText`, `url`, `icon`
-   - Note: Only supports single link per component
-
-5. **QUICK_MENU** - Single quick menu tile
+5. **`QUICK_MENU`** (Clickable Tile Card)
    - Fields: `title`, `imageUrl`, `url`
-   - Note: Only supports single tile per component
+6. **`PRODUCT_DETAIL`** (Product Template Layout Context)
+   - Fields: `title`, `showPrice` (Boolean), `showDescription` (Boolean)
+7. **`LATEST_ARTICLE`** (Recent Articles Feed)
+   - Fields: `title`, `articleCount` (Integer)
+8. **`TRENDING_ARTICLE`** (Curated Articles Feed)
+   - Fields: `title`, `articleIds` (Comma-separated list of article IDs/codes)
+9. **`LATEST_EVENT`** (Upcoming Events Feed)
+   - Fields: `title`, `eventIds` (Comma-separated list of event IDs/codes)
+10. **`TOP_EVENT`** (Featured Event Card)
+    - Fields: `title`, `eventId` (Single event ID/code)
 
 ### Database Schema
 
-#### components table (base table)
+#### Base Table (`components`)
 ```sql
 CREATE TABLE components (
     id BIGSERIAL PRIMARY KEY,
     uid VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
-    sort_order INTEGER NOT NULL,
-    slot_id BIGINT NOT NULL,
+    catalog_id VARCHAR(50) NOT NULL DEFAULT 'STAGED',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_components_slot FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE
+    CONSTRAINT uk_components_uid_catalog UNIQUE (uid, catalog_id)
 );
 ```
 
-#### Subtype tables
-Each component subtype has its own table with foreign key to `components.id`:
-- `banner_components`
-- `paragraph_components`
-- `product_carousel_components`
-- `navigation_components`
-- `quick_menu_components`
+#### Slot Join Table (`slot_components`)
+```sql
+CREATE TABLE slot_components (
+    slot_id BIGINT NOT NULL,
+    component_id BIGINT NOT NULL,
+    sort_order INTEGER NOT NULL,
+    CONSTRAINT fk_slot_components_slot FOREIGN KEY (slot_id) REFERENCES slots(id) ON DELETE CASCADE,
+    CONSTRAINT fk_slot_components_component FOREIGN KEY (component_id) REFERENCES components(id) ON DELETE CASCADE
+);
+```
+
+#### Subtype Tables
+Each subclass has a 1-to-1 table joined on `id`:
+- `banner_components`, `paragraph_components`, `product_carousel_components`, `navigation_components`, `quick_menu_components`, `product_detail_components`, `latest_article_components`, `trending_article_components`, `latest_event_components`, `top_event_components`.
+
+---
 
 ## API Examples
 
-### Create Slot
+### 1. Create Slot
 ```bash
 curl -X POST http://localhost:8081/api/cms/slots \
   -H 'Content-Type: application/json' \
@@ -153,15 +172,15 @@ curl -X POST http://localhost:8081/api/cms/slots \
   }'
 ```
 
-### Create Banner Component
+### 2. Create Banner Component inside a Slot
 ```bash
 curl -X POST http://localhost:8081/api/cms/components \
   -H 'Content-Type: application/json' \
   -d '{
-    "uid": "hero-banner",
-    "name": "Hero Banner",
+    "uid": "hero-banner-1",
+    "name": "Homepage Hero Banner",
     "type": "BANNER",
-    "sortOrder": 1,
+    "sortOrder": 0,
     "slotId": 1,
     "imageUrl": "https://example.com/banner.jpg",
     "altText": "Welcome Banner",
@@ -172,104 +191,68 @@ curl -X POST http://localhost:8081/api/cms/components \
   }'
 ```
 
-### Update Component
+### 3. Create Trending Articles Component
 ```bash
-curl -X PUT http://localhost:8081/api/cms/components/1 \
+curl -X POST http://localhost:8081/api/cms/components \
   -H 'Content-Type: application/json' \
   -d '{
-    "uid": "hero-banner",
-    "name": "Updated Hero Banner",
-    "type": "BANNER",
+    "uid": "trending-articles-1",
+    "name": "Trending Tech News",
+    "type": "TRENDING_ARTICLE",
     "sortOrder": 1,
     "slotId": 1,
-    "imageUrl": "https://example.com/new-banner.jpg",
-    "altText": "Updated Banner",
-    "title": "New Season Sale"
+    "title": "Trending Tech News",
+    "articleIds": "article-1,article-2,article-3"
   }'
 ```
 
-### Reorder Component
+### 4. Link an Existing Component to a Slot
 ```bash
-curl -X PUT http://localhost:8081/api/cms/components/1/reorder \
+curl -X POST http://localhost:8081/api/cms/components/slots/2/components/15 \
   -H 'Content-Type: application/json' \
-  -d '{"sortOrder": 5}'
+  -d '{"sortOrder": 0}'
 ```
 
-### Delete Component
+### 5. Reorder Component within a Slot
 ```bash
-curl -X DELETE http://localhost:8081/api/cms/components/1
+curl -X PUT http://localhost:8081/api/cms/components/slots/1/components/10/reorder \
+  -H 'Content-Type: application/json' \
+  -d '{"sortOrder": 2}'
 ```
 
-### Get Slots for Page
+### 6. Unlink Component from a Slot (Without Deleting Entity)
 ```bash
-curl http://localhost:8081/api/cms/slots/page/1
+curl -X DELETE http://localhost:8081/api/cms/components/slots/1/components/10
 ```
+
+### 7. Permanently Delete Component Entity
+```bash
+curl -X DELETE http://localhost:8081/api/cms/components/10
+```
+
+---
 
 ## Cache Strategy
 
-All mutation operations (POST, PUT, DELETE) include cache eviction:
+All mutation operations on slots or components evict the storefront read caches:
 ```java
 @CacheEvict(value = {"page", "slot"}, allEntries = true)
 ```
+When content is published via `/api/sync/{catalogId}`, the synchronization engine deep-copies STAGED entities to ONLINE and purges affected storefront Redis keys.
 
-This ensures the storefront backend's cached data is invalidated when content changes.
-
-## Implementation Notes
-
-### Entity Type Handling
-The Component entity uses a hybrid approach:
-- **Database**: Stores `type` as VARCHAR(50) in components table
-- **Java**: Abstract `getType()` method returns ComponentType enum
-- **@PrePersist**: Automatically sets `type` field from `getType().name()` before insert
-- **Controller**: Explicitly sets `type` field from request during creation
-
-### Polymorphic Component Handling
-The ComponentManagementController handles polymorphism through:
-1. Jackson @JsonTypeInfo/@JsonSubTypes for request deserialization
-2. Manual type-based factory method pattern for entity creation
-3. Type-specific update methods for each component subclass
-
-### NavigationComponent and QuickMenuComponent Limitations
-Current entity structure supports only single link/tile per component:
-- NavigationComponent: One link (displayText, url, icon)
-- QuickMenuComponent: One tile (title, imageUrl, url)
-
-For multiple links/tiles, create multiple components with different sortOrder values.
-
-## Testing
-
-Verified operations:
-- ✅ Slot creation, update, deletion
-- ✅ Component creation with all types
-- ✅ Component update (fields and validation)
-- ✅ Component reordering (sortOrder change)
-- ✅ Component deletion
-- ✅ Slot retrieval with components
-- ✅ Cache eviction on mutations
-
-## Access
-
-- **CMS Admin UI**: http://localhost:3000/cms/pages → Click "Manage Content" for any page
-- **API Base URL**: http://localhost:8081/api/cms
-- **Storefront API**: http://localhost:8080/api/pages (read-only, cached)
+---
 
 ## Known Issues and Limitations
 
-1. **NavigationComponent and QuickMenuComponent** only support single link/tile per component
-2. **Frontend drag-and-drop** is visual concept only - reordering requires manual sortOrder input
-3. **Component type cannot be changed** after creation (by design)
-4. **No validation** for duplicate component UIDs within same slot
-5. **No soft delete** - components are permanently deleted
+1. **Navigation and Quick Menu Components**: Currently design-constrained to support a single link (`displayText`, `url`, `icon`) or single tile (`title`, `imageUrl`, `url`) per component instance. Multiple items should be created as separate components in the slot.
+2. **Component Type Immutability**: By design, once a component is created with a specific `type` (`BANNER`, `PARAGRAPH`, etc.), its type cannot be modified via `PUT /api/cms/components/{id}`.
+3. **Shared Component Deletion**: Permanently deleting a component entity (`DELETE /api/cms/components/{id}`) removes it from all slots referencing it across the database due to foreign key cascade rules. Use `DELETE /api/cms/components/slots/{slotId}/components/{id}` to unlink from a single slot.
+
+---
 
 ## Future Enhancements
 
-1. Add support for multiple links in NavigationComponent (JSON array or @OneToMany relationship)
-2. Add support for multiple tiles in QuickMenuComponent
-3. Implement actual drag-and-drop reordering with automatic sortOrder calculation
-4. Add component duplication feature
-5. Add component preview in modal before save
-6. Add version history for components
-7. Add component templates/presets
-8. Add bulk operations (delete multiple, reorder multiple)
-9. Add component search and filtering
-10. Add validation for unique UIDs within slot
+1. Add multi-link array support in `NavigationComponent` and `QuickMenuComponent`.
+2. Support visual drag-and-drop reordering with automatic background position index calculations.
+3. Add component duplication and template preset features.
+4. Add version history and rollback capabilities for individual component entities.

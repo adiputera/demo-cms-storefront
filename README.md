@@ -101,12 +101,16 @@ docker compose up -d --build
 - `GET /api/products/{code}`: Fetch product by code (e.g. `macbook-pro`).
 
 ### CMS Administrative Write API (Port 8081)
-- `GET /api/cms/pages`: List all STAGED pages along with their real-time sync statuses.
-- `POST /api/cms/pages`: Create a new STAGED page.
+- `GET /api/cms/pages`, `POST /api/cms/pages`: Manage STAGED pages along with their real-time sync statuses.
+- `GET /api/cms/products`, `POST /api/cms/products`: Manage STAGED products in the catalog.
+- `GET /api/cms/articles`, `POST /api/cms/articles`: Manage STAGED articles.
+- `GET /api/cms/events`, `POST /api/cms/events`: Manage STAGED events.
+- `GET /api/cms/items/{type}/search-metadata`: Discover metadata and allowed operators for item search across domain entities (`product`, `article`, `event`, `page`, `slot`, `component`).
 - `POST /api/cms/items/{type}/search`: Query items of a given type with dynamic search criteria (supports `CONTAINS`, `EQUALS`, `MORE_THAN`, `LESS_THAN` operators).
 - `POST /api/sync/{catalogId}`: Deep copy and publish all STAGED content to the ONLINE catalog.
-- `POST /api/sync/item/{itemId}`: Granular, single-item synchronization from STAGED to ONLINE.
+- `POST /api/sync/item/{entityType}/{itemId}`: Granular, single-item synchronization from STAGED to ONLINE.
 - `GET /api/cms/components/types`: Get list of registered, reflection-discovered component types.
+- `GET /api/cms/components/types/{type}/schema`: Get dynamic form schema definition for a specific component type.
 - `POST /api/cms/media/upload`: Upload multipart files to the local shared volume.
 
 ---
