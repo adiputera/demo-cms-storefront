@@ -399,7 +399,9 @@ public class CatalogSyncService {
                 
                 @SuppressWarnings("unchecked")
                 Collection<Object> existingCol = (Collection<Object>) onlineWrapper.getPropertyValue(propName);
+                
                 if (existingCol == null) {
+                    // Collection doesn't exist yet, create new one
                     if (List.class.isAssignableFrom(attr.getJavaType())) {
                         existingCol = new ArrayList<>();
                     } else {
@@ -407,12 +409,37 @@ public class CatalogSyncService {
                     }
                     onlineWrapper.setPropertyValue(propName, existingCol);
                 }
-
-                existingCol.clear();
+                
+                // Build list of synced items
+                List<Object> syncedItems = new ArrayList<>();
                 for (CatalogAwareModel stagedItem : stagedCol) {
                     CatalogAwareModel onlineItem = getFromCache(targetType, stagedItem.getSyncKey(), cache, onlineCatalog);
                     if (onlineItem != null) {
-                        existingCol.add(onlineItem);
+                        syncedItems.add(onlineItem);
+                    }
+                }
+                
+                // Update existing collection in place to avoid orphan removal issues
+                // For Lists with @OrderColumn, this preserves Hibernate's index tracking
+                existingCol.retainAll(syncedItems);  // Remove items not in synced list
+                
+                // Add new items that aren't already present
+                for (Object item : syncedItems) {
+                    if (!existingCol.contains(item)) {
+                        existingCol.add(item);
+                    }
+                }
+                
+                // For Lists, ensure correct order
+                if (existingCol instanceof List) {
+                    List<Object> existingList = (List<Object>) existingCol;
+                    for (int i = 0; i < syncedItems.size(); i++) {
+                        Object syncedItem = syncedItems.get(i);
+                        int currentIndex = existingList.indexOf(syncedItem);
+                        if (currentIndex != i) {
+                            existingList.remove(currentIndex);
+                            existingList.add(i, syncedItem);
+                        }
                     }
                 }
 

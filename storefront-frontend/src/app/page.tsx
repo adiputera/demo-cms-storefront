@@ -56,18 +56,13 @@ export default async function HomePage() {
           )}
           
           <div className="space-y-8">
-            {slotsWithComponents
-              .sort((a, b) => {
-                const order = ['hero', 'content', 'footer'];
-                return order.indexOf(a.code) - order.indexOf(b.code);
-              })
-              .map((slot) => (
-                <SlotRenderer
-                  key={slot.id}
-                  slot={slot}
-                  className={slot.code === 'footer' ? 'border-t pt-8 mt-12' : ''}
-                />
-              ))}
+            {slotsWithComponents.map((slot) => (
+              <SlotRenderer
+                key={slot.id}
+                slot={slot}
+                className={slot.code === 'footer' ? 'border-t pt-8 mt-12' : ''}
+              />
+            ))}
           </div>
         </div>
       </div>

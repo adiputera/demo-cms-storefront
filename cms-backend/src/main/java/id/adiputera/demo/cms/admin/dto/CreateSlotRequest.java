@@ -27,4 +27,6 @@ public class CreateSlotRequest {
     
     @NotNull(message = "Page ID is required")
     private Long pageId;
+    
+    private Integer sortOrder;
 }

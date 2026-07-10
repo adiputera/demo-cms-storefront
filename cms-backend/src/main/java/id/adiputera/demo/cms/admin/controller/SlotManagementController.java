@@ -1,6 +1,7 @@
 package id.adiputera.demo.cms.admin.controller;
 
 import id.adiputera.demo.cms.admin.dto.CreateSlotRequest;
+import id.adiputera.demo.cms.admin.dto.ReorderSlotRequest;
 import id.adiputera.demo.cms.admin.dto.SlotResponse;
 import id.adiputera.demo.cms.admin.dto.UpdateSlotRequest;
 import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
@@ -14,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -25,6 +27,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -87,6 +92,7 @@ public class SlotManagementController {
     }
 
     @PostMapping
+    @Transactional
     public ResponseEntity<SlotResponse> createSlot(@Valid @RequestBody CreateSlotRequest request) {
         Page page = pageRepository.findById(request.getPageId())
             .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + request.getPageId()));
@@ -99,6 +105,13 @@ public class SlotManagementController {
         slot.setCatalog(getStagedCatalog());
 
         Slot savedSlot = slotRepository.save(slot);
+        
+        // Add to page slots at specific position if sortOrder provided
+        int index = request.getSortOrder() != null ? request.getSortOrder() : page.getSlots().size();
+        if (index > page.getSlots().size()) index = page.getSlots().size();
+        page.getSlots().add(index, savedSlot);
+        pageRepository.save(page);
+        
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
@@ -115,6 +128,37 @@ public class SlotManagementController {
 
         Slot updatedSlot = slotRepository.save(slot);
         return ResponseEntity.ok(mapToSlotResponse(updatedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
+    }
+
+    @PutMapping("/{id}/reorder")
+    @Transactional
+    public ResponseEntity<Void> reorderSlot(
+            @PathVariable Long id,
+            @Valid @RequestBody ReorderSlotRequest request) {
+        
+        Slot slot = slotRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Slot not found with id: " + id));
+        Page page = slot.getPage();
+        
+        // Get current position and new position
+        List<Slot> slots = page.getSlots();
+        int currentIndex = slots.indexOf(slot);
+        int newIndex = request.getSortOrder();
+        
+        if (currentIndex == -1 || newIndex < 0 || newIndex >= slots.size()) {
+            return ResponseEntity.badRequest().build();
+        }
+        
+        if (currentIndex != newIndex) {
+            // Remove from current position and insert at new position
+            slots.remove(currentIndex);
+            slots.add(newIndex, slot);
+            
+            // Save will trigger @OrderColumn update
+            pageRepository.save(page);
+        }
+        
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

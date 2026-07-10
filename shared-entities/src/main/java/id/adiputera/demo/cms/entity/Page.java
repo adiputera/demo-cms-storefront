@@ -140,6 +140,7 @@ public class Page extends CatalogAwareModel {
 
     // Relationships
     @OneToMany(mappedBy = "page", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderColumn(name = "page_slot_order")
     @Builder.Default
     private List<Slot> slots = new ArrayList<>();
 

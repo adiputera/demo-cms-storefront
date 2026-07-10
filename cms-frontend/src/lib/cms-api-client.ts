@@ -270,6 +270,19 @@ class CMSApiClient {
     }
   }
 
+  async reorderSlot(id: number, sortOrder: number) {
+    const response = await fetch(`${this.baseUrl}/slots/${id}/reorder`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sortOrder }),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to reorder slot');
+    }
+  }
+
   // Components
   async getAllComponents() {
     const response = await fetch(`${this.baseUrl}/components`, { cache: 'no-store' });

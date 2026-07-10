@@ -132,6 +132,20 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  const handleMoveSlot = async (slotId: number, direction: 'up' | 'down') => {
+    const slotIndex = slots.findIndex(s => s.id === slotId);
+    const newOrder = direction === 'up' ? slotIndex - 1 : slotIndex + 1;
+
+    if (newOrder < 0 || newOrder >= slots.length) return;
+
+    try {
+      await cmsApiClient.reorderSlot(slotId, newOrder);
+      await loadPageData();
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-8">
@@ -183,7 +197,7 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
           <p className="text-gray-600">No slots yet. Add your first slot to get started.</p>
         ) : (
           <div className="space-y-6">
-            {slots.map((slot) => (
+            {slots.map((slot, slotIndex) => (
               <div key={slot.id} className="border border-gray-250 rounded-xl p-4 sm:p-6 bg-white shadow-sm">
                 <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-3">
@@ -198,6 +212,22 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end border-t pt-4 lg:border-t-0 lg:pt-0">
+                    <button
+                      onClick={() => handleMoveSlot(slot.id, 'up')}
+                      disabled={slotIndex === 0}
+                      className="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move slot up"
+                    >
+                      ↑
+                    </button>
+                    <button
+                      onClick={() => handleMoveSlot(slot.id, 'down')}
+                      disabled={slotIndex === slots.length - 1}
+                      className="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Move slot down"
+                    >
+                      ↓
+                    </button>
                     <button
                       onClick={() => {
                         setSelectedSlot(slot);

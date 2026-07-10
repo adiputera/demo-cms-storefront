@@ -49,6 +49,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -174,10 +175,17 @@ public class ComponentManagementController {
         Component component = componentRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Component not found with id: " + id));
 
-        if (slot.getComponents().remove(component)) {
+        // To avoid duplicate key constraint violation, rebuild the list
+        List<Component> currentComponents = new ArrayList<>(slot.getComponents());
+        if (currentComponents.remove(component)) {
             int newIndex = request.getSortOrder();
-            if (newIndex > slot.getComponents().size()) newIndex = slot.getComponents().size();
-            slot.getComponents().add(newIndex, component);
+            if (newIndex > currentComponents.size()) newIndex = currentComponents.size();
+            currentComponents.add(newIndex, component);
+            
+            // Clear and rebuild to trigger proper DELETE then INSERT
+            slot.getComponents().clear();
+            slotRepository.flush();
+            slot.getComponents().addAll(currentComponents);
             slotRepository.save(slot);
         }
         return ResponseEntity.noContent().build();
