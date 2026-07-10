@@ -16,5 +16,6 @@ public enum CmsFieldType {
     ARRAY_STRING,
     REFERENCE,
     IMAGE,
-    FILE
+    FILE,
+    ENUM
 }

@@ -2,6 +2,9 @@
 
 Complete API reference for the Headless CMS Demo Application.
 
+> **Tech Stack**: Spring Boot 4.0.0-M1 | Java 25 | PostgreSQL 16 | Redis 7  
+> **Base Package**: `id.adiputera.demo.cms`
+
 ## Base URLs
 
 - **Storefront API (Read-Only):** `http://localhost:8080/api`
@@ -525,23 +528,113 @@ curl -X DELETE http://localhost:8081/api/cms/products/5
 
 ### Articles
 
-#### List / Get / Create / Update / Delete Articles
-- `GET /api/cms/articles`: List all STAGED articles.
-- `GET /api/cms/articles/{id}`: Get article by ID.
-- `POST /api/cms/articles`: Create article (`code`, `title`, `summary`, `content`, `author`, `imageUrl`).
-- `PUT /api/cms/articles/{id}`: Update article.
-- `DELETE /api/cms/articles/{id}`: Delete article.
+#### List All Articles
+```http
+GET /api/cms/articles
+```
+**Description:** Get all articles in STAGED catalog.
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "uid": "introducing-macbook",
+    "title": "Introducing the MacBook Pro 16",
+    "slug": "introducing-the-macbook-pro-16",
+    "body": "The new MacBook Pro 16 sets a new standard...",
+    "author": "John Doe",
+    "imageUrl": "/uploads/macbook-article.jpg",
+    "syncStatus": "SYNCED"
+  }
+]
+```
+
+#### Create Article
+```http
+POST /api/cms/articles
+```
+**Request Body:**
+```json
+{
+  "uid": "my-article-uid",
+  "title": "My Article Title",
+  "slug": "my-article-slug",
+  "body": "Article content...",
+  "author": "Jane Smith",
+  "imageUrl": "/uploads/article.jpg"
+}
+```
+
+**Validation Rules:**
+- `uid` - Required, unique across catalog
+- `title` - Required, max 255 characters
+- `slug` - Required, URL-friendly
+- `body` - Required, supports HTML
+
+**Response:** `201 Created`
+
+#### Update / Delete Articles
+- `GET /api/cms/articles/{id}`: Get article by ID
+- `PUT /api/cms/articles/{id}`: Update article
+- `DELETE /api/cms/articles/{id}`: Delete article
 
 ---
 
 ### Events
 
-#### List / Get / Create / Update / Delete Events
-- `GET /api/cms/events`: List all STAGED events.
-- `GET /api/cms/events/{id}`: Get event by ID.
-- `POST /api/cms/events`: Create event (`code`, `title`, `description`, `location`, `eventDate`, `imageUrl`).
-- `PUT /api/cms/events/{id}`: Update event.
-- `DELETE /api/cms/events/{id}`: Delete event.
+#### List All Events
+```http
+GET /api/cms/events
+```
+**Description:** Get all events in STAGED catalog.
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "uid": "apple-summit-2026",
+    "title": "Apple Tech Summit 2026",
+    "slug": "apple-tech-summit-2026",
+    "description": "Join us for a full day of talks...",
+    "location": "Jakarta",
+    "eventDate": "2026-09-15T09:00:00",
+    "imageUrl": "/uploads/summit.jpg",
+    "syncStatus": "NOT_SYNCED"
+  }
+]
+```
+
+#### Create Event
+```http
+POST /api/cms/events
+```
+**Request Body:**
+```json
+{
+  "uid": "my-event-uid",
+  "title": "My Event",
+  "slug": "my-event",
+  "description": "Event description",
+  "location": "City Name",
+  "eventDate": "2026-12-01T10:00:00",
+  "imageUrl": "/uploads/event.jpg"
+}
+```
+
+**Validation Rules:**
+- `uid` - Required, unique across catalog
+- `title` - Required, max 255 characters
+- `eventDate` - Required, ISO 8601 datetime format
+- `location` - Optional, max 255 characters
+
+**Response:** `201 Created`
+
+#### Update / Delete Events
+- `GET /api/cms/events/{id}`: Get event by ID
+- `PUT /api/cms/events/{id}`: Update event
+- `DELETE /api/cms/events/{id}`: Delete event
 
 ---
 
@@ -551,12 +644,47 @@ curl -X DELETE http://localhost:8081/api/cms/products/5
 ```http
 GET /api/cms/items/{type}/search-metadata
 ```
-**Description:** Retrieve searchable fields and allowed operators for dynamic component item selection (types: `product`, `article`, `event`, `page`, `slot`, `component`).
+**Description:** Retrieve searchable fields and allowed operators for dynamic component item selection.
+
+**Supported Types:** `product`, `article`, `event`, `page`, `slot`, `component`
+
+**Response:** `200 OK`
+```json
+{
+  "type": "product",
+  "fields": [
+    {
+      "name": "name",
+      "type": "STRING",
+      "operators": ["CONTAINS", "EQUALS"]
+    },
+    {
+      "name": "price",
+      "type": "NUMBER",
+      "operators": ["EQUALS", "MORE_THAN", "LESS_THAN"]
+    },
+    {
+      "name": "code",
+      "type": "STRING",
+      "operators": ["CONTAINS", "EQUALS"]
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl http://localhost:8081/api/cms/items/product/search-metadata
+```
+
+---
 
 #### Query Searchable Items
 ```http
 POST /api/cms/items/{type}/search
 ```
+**Description:** Search items with dynamic criteria. Used by CMS Admin UI for component item pickers.
+
 **Request Body:**
 ```json
 {
@@ -565,9 +693,51 @@ POST /api/cms/items/{type}/search
       "field": "name",
       "operator": "CONTAINS",
       "value": "Pro"
+    },
+    {
+      "field": "price",
+      "operator": "MORE_THAN",
+      "value": "1000"
     }
   ]
 }
+```
+
+**Response:** `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "syncKey": "macbook-pro",
+    "displayName": "MacBook Pro 16\"",
+    "catalogVersion": "STAGED",
+    "syncStatus": "SYNCED"
+  },
+  {
+    "id": 3,
+    "syncKey": "iphone-15-pro",
+    "displayName": "iPhone 15 Pro",
+    "catalogVersion": "STAGED",
+    "syncStatus": "OUT_OF_SYNC"
+  }
+]
+```
+
+**Supported Operators:**
+- `CONTAINS` - Case-insensitive substring match (STRING fields)
+- `EQUALS` - Exact match (STRING, NUMBER, BOOLEAN)
+- `MORE_THAN` - Greater than (NUMBER fields)
+- `LESS_THAN` - Less than (NUMBER fields)
+
+**Example:**
+```bash
+curl -X POST http://localhost:8081/api/cms/items/product/search \
+  -H "Content-Type: application/json" \
+  -d '{
+    "criteria": [
+      {"field": "name", "operator": "CONTAINS", "value": "MacBook"}
+    ]
+  }'
 ```
 
 ---
@@ -593,28 +763,156 @@ POST /api/cms/items/{type}/search
 
 ### Catalog Synchronization
 
-#### Sync Catalog
+#### Sync Entire Catalog
 ```http
 POST /api/sync/{catalogId}
 ```
-**Description:** Deep-copy and publish all `STAGED` content to the specified catalog version (e.g., `ONLINE`).
+**Description:** Deep-copy and publish all `STAGED` content to the specified catalog version (e.g., `ONLINE`). This is a bulk operation that synchronizes all pages, slots, components, products, articles, and events.
+
+**Parameters:**
+- `catalogId` (path) - Target catalog ID (typically `2` for ONLINE)
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Catalog synced successfully",
+  "itemsSynced": 127,
+  "timestamp": "2026-07-10T14:30:00Z"
+}
+```
+
+**Side Effects:**
+- Evicts all Redis cache entries for storefront
+- Updates `syncVersion` for all affected entities
+- Creates or updates entities in target catalog
+
+**Example:**
+```bash
+curl -X POST http://localhost:8081/api/sync/2
+```
+
+---
 
 #### Sync Single Item
 ```http
 POST /api/sync/item/{entityType}/{itemId}
 ```
-**Description:** Publish an individual item (`page`, `slot`, `component`, `product`, `article`, `event`) from STAGED to ONLINE.
+**Description:** Granular synchronization - publish an individual item from STAGED to ONLINE. Useful for selective publishing without syncing the entire catalog.
+
+**Parameters:**
+- `entityType` (path) - Entity type: `page`, `slot`, `component`, `product`, `article`, `event`
+- `itemId` (path) - Item ID in STAGED catalog
+
+**Response:** `200 OK`
+```json
+{
+  "message": "Item synced successfully",
+  "entityType": "product",
+  "itemId": 15,
+  "syncStatus": "SYNCED"
+}
+```
+
+**Example:**
+```bash
+# Sync a single product
+curl -X POST http://localhost:8081/api/sync/item/product/15
+
+# Sync a single page
+curl -X POST http://localhost:8081/api/sync/item/page/3
+```
 
 ---
 
 ### Component Schema Discovery & Media
 
-#### Component Types & Schemas
-- `GET /api/cms/components/types`: Returns list of all 10 component type enum strings.
-- `GET /api/cms/components/types/{type}/schema`: Returns reflection-scanned field definitions, types, required flags, and item picker metadata for dynamic CMS forms.
+#### Get Component Types
+```http
+GET /api/cms/components/types
+```
+**Description:** Get list of all registered component type enum strings discovered via `@CmsComponent` annotation.
+
+**Response:** `200 OK`
+```json
+[
+  "BANNER",
+  "PARAGRAPH",
+  "PRODUCT_CAROUSEL",
+  "NAVIGATION",
+  "QUICK_MENU",
+  "PRODUCT_DETAIL",
+  "LATEST_ARTICLE",
+  "TRENDING_ARTICLE",
+  "LATEST_EVENT",
+  "TOP_EVENT"
+]
+```
+
+---
+
+#### Get Component Schema
+```http
+GET /api/cms/components/types/{type}/schema
+```
+**Description:** Get reflection-generated schema for dynamic form rendering. Returns field definitions, types, validation rules, and item picker metadata.
+
+**Parameters:**
+- `type` (path) - Component type (e.g., `BANNER`, `PRODUCT_CAROUSEL`)
+
+**Response:** `200 OK`
+```json
+{
+  "type": "PRODUCT_CAROUSEL",
+  "fields": [
+    {
+      "name": "title",
+      "type": "text",
+      "required": true,
+      "label": "Title"
+    },
+    {
+      "name": "productCodes",
+      "type": "item_picker",
+      "required": true,
+      "label": "Products",
+      "itemType": "product",
+      "multiple": true,
+      "syncKeyField": "code"
+    }
+  ]
+}
+```
+
+**Example:**
+```bash
+curl http://localhost:8081/api/cms/components/types/PRODUCT_CAROUSEL/schema
+```
+
+---
 
 #### Upload Media
-- `POST /api/cms/media/upload`: Upload multipart file. Returns relative URL (e.g., `/uploads/image.png`).
+```http
+POST /api/cms/media/upload
+```
+**Description:** Upload multipart file to shared volume. Files are stored in `/uploads/` directory and accessible via Next.js proxy.
+
+**Request:** `multipart/form-data`
+- `file` - File field (accepts images: jpg, png, gif, webp)
+
+**Response:** `200 OK`
+```json
+{
+  "url": "/uploads/image-1720614000.jpg",
+  "filename": "image-1720614000.jpg",
+  "size": 245678
+}
+```
+
+**Example:**
+```bash
+curl -X POST http://localhost:8081/api/cms/media/upload \
+  -F "file=@/path/to/image.jpg"
+```
 
 ---
 
@@ -647,13 +945,15 @@ POST /api/sync/item/{entityType}/{itemId}
 ```
 
 ### 3. Product Carousel Component (`PRODUCT_CAROUSEL`)
+**Uses SyncKey**: References products via `productCodes` (comma-separated string) instead of database IDs.
+
 ```json
 {
   "type": "PRODUCT_CAROUSEL",
   "uid": "featured-products-1",
   "name": "Featured Products",
   "title": "Featured Products",
-  "productCodes": "macbook-pro,iphone-15-pro"
+  "productCodes": "macbook-pro,iphone-15-pro,macbook-air"
 }
 ```
 
@@ -694,6 +994,8 @@ POST /api/sync/item/{entityType}/{itemId}
 ```
 
 ### 7. Latest Article Component (`LATEST_ARTICLE`)
+**Automatic Selection**: Displays the N most recent articles ordered by creation date.
+
 ```json
 {
   "type": "LATEST_ARTICLE",
@@ -705,35 +1007,41 @@ POST /api/sync/item/{entityType}/{itemId}
 ```
 
 ### 8. Trending Article Component (`TRENDING_ARTICLE`)
+**Uses SyncKey**: References articles via `articleUids` (comma-separated UIDs) instead of database IDs.
+
 ```json
 {
   "type": "TRENDING_ARTICLE",
   "uid": "trending-articles-1",
   "name": "Curated Trending Articles",
   "title": "Trending Now",
-  "articleIds": "1,2,3"
+  "articleUids": "introducing-macbook,iphone-photography,mac-accessories"
 }
 ```
 
 ### 9. Latest Event Component (`LATEST_EVENT`)
+**Uses SyncKey**: References events via `eventUids` (comma-separated UIDs) instead of database IDs.
+
 ```json
 {
   "type": "LATEST_EVENT",
   "uid": "latest-events-1",
   "name": "Upcoming Tech Events",
   "title": "Events & Webinars",
-  "eventIds": "1,2"
+  "eventUids": "apple-summit-2026,tech-conference-2026"
 }
 ```
 
 ### 10. Top Event Component (`TOP_EVENT`)
+**Uses SyncKey**: References a single event via `eventUid` instead of database ID.
+
 ```json
 {
   "type": "TOP_EVENT",
   "uid": "top-event-1",
   "name": "Featured Conference",
   "title": "Don't Miss Out",
-  "eventId": "1"
+  "eventUid": "apple-summit-2026"
 }
 ```
 
@@ -763,22 +1071,34 @@ All errors follow this structure:
 
 ## Caching Behavior
 
-**Storefront API:**
-- Pages: Cached for 15 minutes
-- Slots: Cached for 15 minutes
-- Products: Cached for 30 minutes
+**Storefront API (Redis TTL):**
+- Pages: Cached for 15 minutes (`page:{slug}`)
+- Slots: Cached for 15 minutes (`slot:{id}`)
+- Products: Cached for 30 minutes (`product:{code}`, `products:all`)
+- Articles: Cached for 20 minutes (`articles:latest`, `article:{uid}`)
+- Events: Cached for 20 minutes (`events:latest`, `event:{uid}`)
 
 **CMS API:**
-- No caching (always fresh data)
-- Evicts relevant cache entries on updates
+- No caching (always reads from database)
+- Write operations evict relevant storefront cache entries
+- Sync operations trigger `FLUSHALL` on Redis to clear entire cache
 
 **Cache Key Format:**
 ```
-page:{slug}            # e.g., page:index
-slot:{id}              # e.g., slot:1
-product:{code}         # e.g., product:macbook-pro
-products:all           # List of all products
+page:{slug}              # e.g., page:/about-us
+slot:{id}                # e.g., slot:1
+product:{code}           # e.g., product:macbook-pro
+products:all             # List of all products
+article:{uid}            # e.g., article:introducing-macbook
+articles:latest          # Latest articles list
+event:{uid}              # e.g., event:apple-summit-2026
+events:upcoming          # Upcoming events list
 ```
+
+**Cache Eviction Strategy:**
+- Manual sync: `FLUSHALL` (clears all keys)
+- Individual item update: Evicts specific key and related list keys
+- Component update: Evicts parent slot and page keys
 
 ---
 
@@ -805,8 +1125,46 @@ Import this collection to test all endpoints:
 
 ---
 
-## GraphQL Alternative (Future Enhancement)
+## SyncKey Architecture
 
+This CMS uses **SyncKey-based references** instead of database IDs to maintain referential integrity across catalog versions (STAGED vs ONLINE).
+
+**Why SyncKeys?**
+- Database IDs differ between STAGED and ONLINE catalogs
+- Components need stable references that work in both catalogs
+- Sync operations must preserve relationships correctly
+
+**SyncKey Mappings:**
+- Products: `code` field (e.g., `"macbook-pro"`)
+- Articles: `uid` field (e.g., `"introducing-macbook"`)
+- Events: `uid` field (e.g., `"apple-summit-2026"`)
+- Components: `uid` field (unique across system)
+- Pages: `slug` field (e.g., `"/about-us"`)
+
+**Component SyncKey Fields:**
+```
+Component Type          | SyncKey Field        | Format
+------------------------|----------------------|------------------
+PRODUCT_CAROUSEL        | productCodes         | CSV string
+TRENDING_ARTICLE        | articleUids          | CSV string
+LATEST_EVENT            | eventUids            | CSV string
+TOP_EVENT               | eventUid             | Single string
+```
+
+---
+
+## Additional Resources
+
+- **[README.md](README.md)** - Project overview and setup guide
+- **[QUICKSTART.md](QUICKSTART.md)** - Detailed walkthrough with troubleshooting
+- **[SLOT_COMPONENT_MANAGEMENT.md](SLOT_COMPONENT_MANAGEMENT.md)** - Architecture deep-dive
+- **[VERIFICATION_REPORT.md](VERIFICATION_REPORT.md)** - Recent migrations and fixes
+
+---
+
+## Future Enhancements
+
+### GraphQL Support
 Consider implementing GraphQL for more flexible querying:
 
 ```graphql
@@ -831,4 +1189,16 @@ query {
 }
 ```
 
-This would reduce over-fetching and allow clients to request exactly what they need.
+### Webhooks
+Notify external systems when content is published:
+```bash
+POST https://external-system.com/webhook
+{
+  "event": "catalog.synced",
+  "catalogId": 2,
+  "timestamp": "2026-07-10T14:30:00Z"
+}
+```
+
+### Content Versioning
+Track historical versions of each content item for rollback capability.

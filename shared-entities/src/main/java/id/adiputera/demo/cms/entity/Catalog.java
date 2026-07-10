@@ -56,7 +56,7 @@ public class Catalog extends ItemModel {
     @Column(name = "version", nullable = false, length = 20)
     @CmsField(
         displayName = "Version",
-        type = CmsFieldType.STRING,
+        type = CmsFieldType.ENUM,
         required = true,
         searchable = true,
         order = 2

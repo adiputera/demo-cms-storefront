@@ -1,5 +1,7 @@
 package id.adiputera.demo.cms.admin.dto;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +26,5 @@ public class CmsFieldMetadataDTO {
     private String reference;
     private String referenceCardinality;
     private int order;
+    private List<String> enumValues;
 }

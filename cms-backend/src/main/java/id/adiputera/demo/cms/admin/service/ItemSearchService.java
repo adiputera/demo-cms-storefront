@@ -90,6 +90,7 @@ public class ItemSearchService {
                         .reference(f.getTargetEntity() != null && f.getTargetEntity() != id.adiputera.demo.cms.entity.ItemModel.class ? f.getTargetEntity().getName() : null)
                         .referenceCardinality(f.getCardinality() != null ? f.getCardinality().name() : null)
                         .order(f.getOrder())
+                        .enumValues(f.getEnumConstants())
                         .build())
                 .collect(Collectors.toList());
 

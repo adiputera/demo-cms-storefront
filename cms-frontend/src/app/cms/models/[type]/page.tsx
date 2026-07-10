@@ -169,6 +169,14 @@ export default function GenericDataTablePage({ params }: { params: Promise<{ typ
         </span>
       );
     }
+    if (typeof value === 'string' && value.length > 0 && value === value.toUpperCase() && /^[A-Z_]+$/.test(value)) {
+      // Render enum-like values (all uppercase with underscores) as badges
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium font-sans bg-purple-100 text-purple-800">
+          {value}
+        </span>
+      );
+    }
     return <span className="text-gray-700 font-sans">{value.toString()}</span>;
   };
 

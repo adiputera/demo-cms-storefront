@@ -1,6 +1,7 @@
 package id.adiputera.demo.cms.admin.metadata;
 
 import java.lang.reflect.Method;
+import java.util.List;
 
 import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.converter.CmsFormatter;
@@ -37,6 +38,7 @@ public class CmsFieldMetadata {
     private CmsFormatter formatter;
     private Method getter;
     private Method setter;
+    private List<String> enumConstants;
 
     /**
      * Determines if the field is editable during creation.

@@ -4,17 +4,22 @@ import React, { useEffect, useState } from 'react';
 import { cmsApiClient } from '@/lib/cms-api-client';
 import ReferencePickerModal from './ReferencePickerModal';
 import ImageUploader from '../ImageUploader';
+import DateInput from './DateInput';
+import DateTimeInput from './DateTimeInput';
+import ArrayStringInput from './ArrayStringInput';
+import FileUploader from './FileUploader';
 
 interface FieldMetadata {
   name: string;
   displayName: string;
-  type: 'STRING' | 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'REFERENCE' | 'IMAGE' | 'FILE';
+  type: 'STRING' | 'TEXT' | 'NUMBER' | 'BOOLEAN' | 'DATE' | 'DATETIME' | 'ARRAY_STRING' | 'REFERENCE' | 'IMAGE' | 'FILE' | 'ENUM';
   required: boolean;
   editableOnUpdate: boolean;
   placeholder: string;
   reference: string; // FQCN
   referenceCardinality?: 'SINGLE' | 'MULTIPLE';
   order: number;
+  enumValues?: string[];
 }
 
 interface ItemMetadata {
@@ -79,6 +84,13 @@ export default function CmsForm({
               } else {
                 initialFormValues[f.name] = [];
               }
+            } else if (f.type === 'ARRAY_STRING') {
+              const val = initialData[f.name];
+              if (Array.isArray(val)) {
+                initialFormValues[f.name] = val;
+              } else {
+                initialFormValues[f.name] = [];
+              }
             } else {
               initialFormValues[f.name] = initialData[f.name];
             }
@@ -86,8 +98,12 @@ export default function CmsForm({
             // Default values
             if (f.type === 'REFERENCE' && f.referenceCardinality === 'MULTIPLE') {
               initialFormValues[f.name] = [];
+            } else if (f.type === 'ARRAY_STRING') {
+              initialFormValues[f.name] = [];
+            } else if (f.type === 'BOOLEAN') {
+              initialFormValues[f.name] = false;
             } else {
-              initialFormValues[f.name] = f.type === 'BOOLEAN' ? false : '';
+              initialFormValues[f.name] = '';
             }
           }
         });
@@ -246,6 +262,21 @@ export default function CmsForm({
                   />
                   <span className="ml-2.5 text-sm text-gray-600 font-sans">Active</span>
                 </div>
+              ) : field.type === 'ENUM' ? (
+                <select
+                  value={formData[field.name] || ''}
+                  disabled={!isEditable}
+                  required={isRequired}
+                  onChange={(e) => handleChange(field.name, e.target.value)}
+                  className="bg-white border border-gray-300 rounded-lg text-sm px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 font-sans"
+                >
+                  <option value="">-- Select {field.displayName} --</option>
+                  {field.enumValues?.map((val) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
               ) : field.type === 'TEXT' ? (
                 <textarea
                   value={formData[field.name] || ''}
@@ -271,11 +302,42 @@ export default function CmsForm({
                   onChange={(e) => handleChange(field.name, e.target.value)}
                   className="bg-white border border-gray-300 rounded-lg text-sm px-3.5 py-2.5 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none disabled:bg-gray-50 disabled:text-gray-500 font-sans"
                 />
+              ) : field.type === 'DATE' ? (
+                <DateInput
+                  value={formData[field.name] || ''}
+                  onChange={(value) => handleChange(field.name, value)}
+                  placeholder={field.placeholder || 'Select date...'}
+                  required={isRequired}
+                  disabled={!isEditable}
+                />
+              ) : field.type === 'DATETIME' ? (
+                <DateTimeInput
+                  value={formData[field.name] || ''}
+                  onChange={(value) => handleChange(field.name, value)}
+                  placeholder={field.placeholder || 'Select date and time...'}
+                  required={isRequired}
+                  disabled={!isEditable}
+                />
+              ) : field.type === 'ARRAY_STRING' ? (
+                <ArrayStringInput
+                  value={formData[field.name] || []}
+                  onChange={(value) => handleChange(field.name, value)}
+                  placeholder={field.placeholder || 'Type and press Enter to add...'}
+                  required={isRequired}
+                  disabled={!isEditable}
+                />
               ) : field.type === 'IMAGE' ? (
                 <ImageUploader
                   value={formData[field.name] || ''}
                   onChange={(url) => handleChange(field.name, url)}
                   placeholder={field.placeholder || 'Upload or paste image URL'}
+                  required={isRequired}
+                />
+              ) : field.type === 'FILE' ? (
+                <FileUploader
+                  value={formData[field.name] || ''}
+                  onChange={(url) => handleChange(field.name, url)}
+                  placeholder={field.placeholder || 'Upload or paste file URL'}
                   required={isRequired}
                 />
               ) : field.type === 'REFERENCE' ? (

@@ -82,6 +82,16 @@ public class CmsTypeRegistry {
                     CmsValueConverter converter = getOrCreateConverter(ann.converter());
                     CmsFormatter formatter = getOrCreateFormatter(ann.formatter());
 
+                    // Detect enum fields and extract constants
+                    List<String> enumConstants = null;
+                    if (ann.type() == CmsFieldType.ENUM && field.getType().isEnum()) {
+                        enumConstants = new ArrayList<>();
+                        Object[] constants = field.getType().getEnumConstants();
+                        for (Object constant : constants) {
+                            enumConstants.add(((Enum<?>) constant).name());
+                        }
+                    }
+
                     CmsFieldMetadata fieldMeta = CmsFieldMetadata.builder()
                             .name(field.getName())
                             .displayName(ann.displayName())
@@ -98,6 +108,7 @@ public class CmsTypeRegistry {
                             .formatter(formatter)
                             .getter(getter)
                             .setter(setter)
+                            .enumConstants(enumConstants)
                             .build();
                     fields.add(fieldMeta);
                 }
