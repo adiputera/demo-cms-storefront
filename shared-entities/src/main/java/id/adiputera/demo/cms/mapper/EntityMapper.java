@@ -156,14 +156,14 @@ public class EntityMapper {
                 .name(component.getName())
                 .type(component.getType().name())
                 .title(component.getTitle())
-                .eventId(component.getEventId())
+                .eventSlug(component.getEventSlug())
                 .build();
     }
 
     private TrendingArticleComponentDTO toTrendingArticleComponentDTO(TrendingArticleComponent component) {
         if (component == null) return null;
-        List<String> articleIds = component.getArticleIds() != null
-                ? Arrays.asList(component.getArticleIds().split(","))
+        List<String> articleSlugs = component.getArticleSlugs() != null
+                ? Arrays.asList(component.getArticleSlugs().split(","))
                 : Collections.emptyList();
         return TrendingArticleComponentDTO.builder()
                 .id(component.getId())
@@ -171,7 +171,7 @@ public class EntityMapper {
                 .name(component.getName())
                 .type(component.getType().name())
                 .title(component.getTitle())
-                .articleIds(articleIds)
+                .articleSlugs(articleSlugs)
                 .build();
     }
 
@@ -201,7 +201,16 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a ProductCarouselComponent entity to its DTO.
+     *
+     * @param component The ProductCarouselComponent entity.
+     * @return The mapped DTO, or null if source is null.
+     */
     private ProductCarouselComponentDTO toProductCarouselComponentDTO(ProductCarouselComponent component) {
+        if (component == null) {
+            return null;
+        }
         List<String> productCodes = component.getProductCodes() != null
                 ? Arrays.asList(component.getProductCodes().split(","))
                 : Collections.emptyList();
@@ -265,8 +274,8 @@ public class EntityMapper {
 
     private LatestEventComponentDTO toLatestEventComponentDTO(LatestEventComponent component) {
         if (component == null) return null;
-        List<String> eventIds = component.getEventIds() != null
-                ? Arrays.asList(component.getEventIds().split(","))
+        List<String> eventSlugs = component.getEventSlugs() != null
+                ? Arrays.asList(component.getEventSlugs().split(","))
                 : Collections.emptyList();
         return LatestEventComponentDTO.builder()
                 .id(component.getId())
@@ -274,7 +283,7 @@ public class EntityMapper {
                 .name(component.getName())
                 .type(component.getType().name())
                 .title(component.getTitle())
-                .eventIds(eventIds)
+                .eventSlugs(eventSlugs)
                 .build();
     }
 

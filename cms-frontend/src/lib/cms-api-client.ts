@@ -1,8 +1,3 @@
-const isServer = typeof window === 'undefined';
-const CMS_API_URL = isServer
-  ? (process.env.CMS_API_URL_INTERNAL || 'http://cms-backend:8081/api/cms')
-  : (process.env.NEXT_PUBLIC_CMS_API_URL || 'http://localhost:8081/api/cms');
-
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
@@ -25,11 +20,31 @@ export interface SearchCriteria {
   value: string;
 }
 
-class CMSApiClient {
-  private baseUrl: string;
+// Module-level variable set at runtime to avoid bundler optimization
+let runtimeBaseUrl: string | null = null;
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+// Export function to set baseUrl from client components
+export function setRuntimeBaseUrl(url: string) {
+  runtimeBaseUrl = url;
+}
+
+class CMSApiClient {
+  private get baseUrl(): string {
+    // Priority 1: Runtime-set URL (from client component useEffect)
+    if (runtimeBaseUrl !== null) {
+      return runtimeBaseUrl;
+    }
+    
+    // Priority 2: SSR uses internal Docker network
+    if (typeof window === 'undefined') {
+      return process.env.CMS_API_URL_INTERNAL || 'http://cms-backend:8081/api/cms';
+    }
+    
+    // Priority 3: Client-side fallback (if setRuntimeBaseUrl not called yet)
+    return (
+      process.env.NEXT_PUBLIC_CMS_API_URL ??
+      `${window.location.protocol}//${window.location.hostname}:8081/api/cms`
+    );
   }
 
   // Pages
@@ -378,6 +393,83 @@ class CMSApiClient {
     return response.json();
   }
 
+  async getTypes() {
+    const response = await fetch(`${this.baseUrl}/items/types`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch CMS types: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async getMetadata(type: string) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/metadata`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch metadata for type ${type}: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async searchData(type: string, criteria: SearchCriteria[]) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/list`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ criteria }),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Failed to fetch generic data list for type ${type}`);
+    }
+    return response.json();
+  }
+
+  async getEntity(type: string, id: string) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/${id}`, { cache: 'no-store' });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch entity ${id} for type ${type}: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  async createEntity(type: string, data: any) {
+    const response = await fetch(`${this.baseUrl}/items/${type}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Failed to create entity for type ${type}`);
+    }
+    return response.json();
+  }
+
+  async updateEntity(type: string, id: string, data: any) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || `Failed to update entity ${id} for type ${type}`);
+    }
+    return response.json();
+  }
+
+  async deleteEntity(type: string, id: string) {
+    const response = await fetch(`${this.baseUrl}/items/${type}/${id}`, {
+      method: 'DELETE',
+      cache: 'no-store',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to delete entity ${id} for type ${type}`);
+    }
+    return response.json();
+  }
+
   // Catalog Synchronization
   async syncCatalog(catalogId: string) {
     const response = await fetch(`${this.baseUrl.replace('/cms', '/sync')}/${catalogId}`, {
@@ -429,4 +521,4 @@ class CMSApiClient {
   }
 }
 
-export const cmsApiClient = new CMSApiClient(CMS_API_URL);
+export const cmsApiClient = new CMSApiClient();

@@ -5,16 +5,31 @@ import type {
   ErrorResponse,
 } from '@/types';
 
-const isServer = typeof window === 'undefined';
-const STOREFRONT_API_URL = isServer
-  ? (process.env.STOREFRONT_API_URL_INTERNAL || 'http://storefront-backend:8080/api')
-  : (process.env.NEXT_PUBLIC_STOREFRONT_API_URL || 'http://localhost:8080/api');
+// Module-level variable set at runtime to avoid bundler optimization
+let runtimeBaseUrl: string | null = null;
+
+// Export function to set baseUrl from client components
+export function setRuntimeBaseUrl(url: string) {
+  runtimeBaseUrl = url;
+}
 
 class ApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+  private get baseUrl(): string {
+    // Priority 1: Runtime-set URL (from client component useEffect)
+    if (runtimeBaseUrl !== null) {
+      return runtimeBaseUrl;
+    }
+    
+    // Priority 2: SSR uses internal Docker network
+    if (typeof window === 'undefined') {
+      return process.env.STOREFRONT_API_URL_INTERNAL || 'http://storefront-backend:8080/api';
+    }
+    
+    // Priority 3: Client-side fallback (if setRuntimeBaseUrl not called yet)
+    return (
+      process.env.NEXT_PUBLIC_STOREFRONT_API_URL ??
+      `${window.location.protocol}//${window.location.hostname}:8080/api`
+    );
   }
 
   private async handleResponse<T>(response: Response): Promise<T> {
@@ -93,12 +108,18 @@ class ApiClient {
    * Fetch multiple products by codes
    */
   async getProductsByCodes(codes: string[]): Promise<Product[]> {
-    const products = await Promise.all(
-      codes.map(code => this.getProductByCode(code))
-    );
-    return products.filter(product => product !== null);
+    if (codes.length === 0) return [];
+    const query = codes.join(',');
+    const response = await fetch(`${this.baseUrl}/products/by-codes?codes=${query}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      next: { revalidate: 300 },
+    });
+    return this.handleResponse<Product[]>(response);
   }
 }
 
 // Export singleton instance
-export const apiClient = new ApiClient(STOREFRONT_API_URL);
+export const apiClient = new ApiClient();

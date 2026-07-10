@@ -54,4 +54,22 @@ public class ProductService {
         List<Product> products = productRepository.findByCodeIn(codes);
         return entityMapper.toProductDTOList(products);
     }
+
+    /**
+     * Fetches products by their IDs.
+     *
+     * @param ids The list of product IDs.
+     * @return The list of product DTOs.
+     */
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getProductsByIds(List<Long> ids) {
+        log.debug("Fetching products with ids: {}", ids);
+
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> products = productRepository.findByIdIn(ids);
+        return entityMapper.toProductDTOList(products);
+    }
 }

@@ -42,4 +42,18 @@ public class ProductController {
         ProductDTO product = productService.getProductByCode(code);
         return ResponseEntity.ok(product);
     }
+
+    /**
+     * Gets online products by their codes.
+     *
+     * @param codes The list of product codes.
+     * @return The list of product DTOs.
+     */
+    @GetMapping("/by-codes")
+    public ResponseEntity<List<ProductDTO>> getProductsByCodes(@org.springframework.web.bind.annotation.RequestParam("codes") List<String> codes) {
+        log.info("GET /api/products/by-codes?codes={}", codes);
+
+        List<ProductDTO> products = productService.getProductsByCodes(codes);
+        return ResponseEntity.ok(products);
+    }
 }

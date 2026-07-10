@@ -23,6 +23,15 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("SELECT p FROM Product p WHERE p.code IN :codes AND p.catalog.version = id.adiputera.demo.cms.entity.CatalogVersion.ONLINE AND p.catalog.catalogId = 'productCatalog'")
     List<Product> findByCodeIn(@Param("codes") List<String> codes);
 
+    /**
+     * Finds online products by their IDs.
+     *
+     * @param ids The list of product IDs.
+     * @return The list of matching online products.
+     */
+    @Query("SELECT p FROM Product p WHERE p.id IN :ids AND p.catalog.version = id.adiputera.demo.cms.entity.CatalogVersion.ONLINE AND p.catalog.catalogId = 'productCatalog'")
+    List<Product> findByIdIn(@Param("ids") List<Long> ids);
+
     @Query("SELECT p FROM Product p WHERE p.catalog.version = id.adiputera.demo.cms.entity.CatalogVersion.ONLINE AND p.catalog.catalogId = 'productCatalog'")
     List<Product> findAllOnline();
 }

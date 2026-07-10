@@ -62,6 +62,7 @@ public class EventManagementService {
                 .slug(request.getSlug())
                 .description(request.getDescription())
                 .location(request.getLocation())
+                .eventDate(request.getEventDate())
                 .build();
         event.setCatalog(catalog);
         
@@ -77,6 +78,7 @@ public class EventManagementService {
         event.setSlug(request.getSlug());
         event.setDescription(request.getDescription());
         event.setLocation(request.getLocation());
+        event.setEventDate(request.getEventDate());
         
         Event updatedEvent = eventRepository.save(event);
         return mapToDTO(updatedEvent);
@@ -95,6 +97,7 @@ public class EventManagementService {
                 .slug(event.getSlug())
                 .description(event.getDescription())
                 .location(event.getLocation())
+                .eventDate(event.getEventDate())
                 .build();
     }
 }

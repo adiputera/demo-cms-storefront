@@ -13,7 +13,9 @@ import lombok.Getter;
 public class ComponentField {
     private String name;
     private String displayName;
-    private String type; // "string", "text", "boolean", "array_string"
+    private String type; // "string", "text", "boolean", "array_string", "reference"
     private boolean required;
     private String placeholder;
+    private String referenceTarget;
+    private String referenceCardinality;
 }

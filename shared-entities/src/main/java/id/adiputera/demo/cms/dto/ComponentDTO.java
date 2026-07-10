@@ -27,6 +27,7 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = QuickMenuComponentDTO.class, name = "QUICK_MENU"),
     @JsonSubTypes.Type(value = ProductDetailComponentDTO.class, name = "PRODUCT_DETAIL"),
     @JsonSubTypes.Type(value = LatestArticleComponentDTO.class, name = "LATEST_ARTICLE"),
+    @JsonSubTypes.Type(value = TrendingArticleComponentDTO.class, name = "TRENDING_ARTICLE"),
     @JsonSubTypes.Type(value = LatestEventComponentDTO.class, name = "LATEST_EVENT"),
     @JsonSubTypes.Type(value = TopEventComponentDTO.class, name = "TOP_EVENT")
 })

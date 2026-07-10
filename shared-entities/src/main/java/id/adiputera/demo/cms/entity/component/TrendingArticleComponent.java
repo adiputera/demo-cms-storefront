@@ -2,6 +2,8 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
+import id.adiputera.demo.cms.entity.Article;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
 import jakarta.persistence.Column;
@@ -31,12 +33,12 @@ public class TrendingArticleComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Section Title", type = "string", required = true, placeholder = "Trending Now")
+    @CmsField(displayName = "Section Title", type = CmsFieldType.STRING, required = true, placeholder = "Trending Now")
     private String title;
 
-    @Column(name = "article_ids", columnDefinition = "TEXT")
-    @CmsField(displayName = "Articles", type = "multiple_items:article", required = true, placeholder = "Select articles...")
-    private String articleIds;
+    @Column(name = "article_slugs", columnDefinition = "TEXT")
+    @CmsField(displayName = "Articles", type = CmsFieldType.REFERENCE, targetEntity = Article.class, cardinality = id.adiputera.demo.cms.annotation.ReferenceCardinality.MULTIPLE, required = true, placeholder = "Select articles...")
+    private String articleSlugs;
 
     @Override
     public ComponentType getType() {

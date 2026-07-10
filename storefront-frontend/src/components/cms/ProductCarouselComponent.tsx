@@ -6,7 +6,6 @@ export default async function ProductCarouselComponent({
   title,
   productCodes,
 }: ProductCarouselComponentType) {
-  // Handle productCodes as either array or comma-separated string
   const codes = Array.isArray(productCodes) 
     ? productCodes 
     : productCodes?.split(',').map(code => code.trim()).filter(Boolean) || [];

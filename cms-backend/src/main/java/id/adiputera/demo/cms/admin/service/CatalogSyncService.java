@@ -2,6 +2,9 @@ package id.adiputera.demo.cms.admin.service;
 
 import id.adiputera.demo.cms.admin.repository.CatalogAwareRepository;
 import id.adiputera.demo.cms.admin.repository.CatalogRepository;
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
+import id.adiputera.demo.cms.annotation.ReferenceCardinality;
 import id.adiputera.demo.cms.entity.Catalog;
 import id.adiputera.demo.cms.entity.CatalogAwareModel;
 import id.adiputera.demo.cms.entity.CatalogVersion;
@@ -23,8 +26,10 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -215,6 +220,8 @@ public class CatalogSyncService {
         copySimpleProperties(stagedEntity, onlineEntity, targetClass);
         onlineEntity.setCatalog(onlineCatalog);
 
+        // No translation needed for string reference fields, syncKeys are copied verbatim
+
         resolveRelationships(stagedEntity, onlineEntity, targetClass, syncedCache, onlineCatalog);
 
         repo.save(onlineEntity);
@@ -317,14 +324,16 @@ public class CatalogSyncService {
 
                     // 1. Copy simple properties (BeanUtils ignores associations via Metamodel)
                     copySimpleProperties(stagedEntity, onlineEntity, entityClass);
-                    
+
                     // 2. Set Catalog
                     onlineEntity.setCatalog(onlineCatalog);
 
-                    // 3. Resolve Relationships using Metamodel and Cache
+                    // 3. No translation needed for string reference fields, syncKeys are copied verbatim
+
+                    // 4. Resolve Relationships using Metamodel and Cache
                     resolveRelationships(stagedEntity, onlineEntity, entityClass, syncedCache, onlineCatalog);
 
-                    // 4. Save and add to global cache for downstream dependents
+                    // 5. Save and add to global cache for downstream dependents
                     onlineEntity = repo.save(onlineEntity);
                     entityCache.put(onlineEntity.getSyncKey(), onlineEntity);
                 }
@@ -464,4 +473,5 @@ public class CatalogSyncService {
             throw new RuntimeException("Failed to instantiate entity subclass: " + staged.getClass(), e);
         }
     }
+
 }

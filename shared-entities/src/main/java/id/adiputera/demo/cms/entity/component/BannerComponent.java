@@ -2,6 +2,7 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
 import jakarta.persistence.Column;
@@ -31,32 +32,58 @@ public class BannerComponent extends Component {
 
     @Size(max = 500)
     @Column(name = "image_url")
-    @CmsField(displayName = "Image URL", type = "image", required = true, placeholder = "https://images.unsplash.com/...")
+    @CmsField(
+        displayName = "Image URL",
+        type = CmsFieldType.IMAGE,
+        required = true,
+        placeholder = "https://images.unsplash.com/..."
+    )
     private String imageUrl;
 
     @Size(max = 255)
     @Column(name = "alt_text")
-    @CmsField(displayName = "Alt Text", type = "string", required = false, placeholder = "Alternative text description")
+    @CmsField(
+        displayName = "Alt Text",
+        type = CmsFieldType.STRING,
+        placeholder = "Alternative text description"
+    )
     private String altText;
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "Banner Title")
+    @CmsField(
+        displayName = "Title",
+        type = CmsFieldType.STRING,
+        required = true,
+        placeholder = "Banner Title"
+    )
     private String title;
 
     @Size(max = 500)
     @Column(name = "subtitle")
-    @CmsField(displayName = "Subtitle", type = "string", required = false, placeholder = "Banner Subtitle")
+    @CmsField(
+        displayName = "Subtitle",
+        type = CmsFieldType.STRING,
+        placeholder = "Banner Subtitle"
+    )
     private String subtitle;
 
     @Size(max = 100)
     @Column(name = "cta_text")
-    @CmsField(displayName = "CTA Text", type = "string", required = false, placeholder = "Shop Now")
+    @CmsField(
+        displayName = "CTA Text",
+        type = CmsFieldType.STRING,
+        placeholder = "Shop Now"
+    )
     private String ctaText;
 
     @Size(max = 500)
     @Column(name = "cta_url")
-    @CmsField(displayName = "CTA URL", type = "string", required = false, placeholder = "/products")
+    @CmsField(
+        displayName = "CTA URL",
+        type = CmsFieldType.STRING,
+        placeholder = "/products"
+    )
     private String ctaUrl;
 
     @Override

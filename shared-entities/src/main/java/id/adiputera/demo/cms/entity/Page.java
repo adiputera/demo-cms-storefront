@@ -1,5 +1,10 @@
 package id.adiputera.demo.cms.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -18,9 +23,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Page class.
@@ -42,31 +44,69 @@ public class Page extends CatalogAwareModel {
 
     @Override
     public String getSyncKey() {
-        return getSlug();
+        return slug;
+    }
+
+    @Override
+    public String getSyncKeyFieldName() {
+        return "slug";
     }
 
     @NotBlank(message = "Slug is required")
     @Size(max = 255)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Page Slug",
+        type = CmsFieldType.STRING,
+        required = true,
+        searchable = true,
+        order = 1
+    )
     private String slug;
 
     @NotBlank(message = "Title is required")
     @Size(max = 255)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Page Title",
+        type = CmsFieldType.STRING,
+        required = true,
+        searchable = true,
+        order = 2
+    )
     private String title;
 
     @NotBlank(message = "Breadcrumb title is required")
     @Size(max = 255)
     @Column(name = "breadcrumb_title", nullable = false)
+    @CmsField(
+        displayName = "Breadcrumb Title",
+        type = CmsFieldType.STRING,
+        required = true,
+        showAsColumn = false,
+        order = 3
+    )
     private String breadcrumbTitle;
 
     // SEO Fields
     @Size(max = 255)
     @Column(name = "meta_title")
+    @CmsField(
+        displayName = "Meta Title",
+        type = CmsFieldType.STRING,
+        showAsColumn = false,
+        order = 4
+    )
     private String metaTitle;
 
     @Size(max = 500)
     @Column(name = "meta_description")
+    @CmsField(
+        displayName = "Meta Description",
+        type = CmsFieldType.TEXT,
+        showAsColumn = false,
+        order = 5
+    )
     private String metaDescription;
 
     @Size(max = 500)

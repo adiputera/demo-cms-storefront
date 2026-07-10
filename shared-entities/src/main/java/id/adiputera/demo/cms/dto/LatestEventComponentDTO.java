@@ -17,7 +17,7 @@ import java.util.List;
 @SuperBuilder
 public class LatestEventComponentDTO extends ComponentDTO {
     private String title;
-    private List<String> eventIds;
+    private List<String> eventSlugs;
 
     public LatestEventComponentDTO() {
         super();

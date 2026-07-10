@@ -1,9 +1,9 @@
 package id.adiputera.demo.cms.admin.dto;
 
+import java.util.List;
+
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 /**
  * Create Trending Article Component Request class.
@@ -14,5 +14,5 @@ import java.util.List;
 @Setter
 public class CreateTrendingArticleComponentRequest extends CreateComponentRequest {
     private String title;
-    private List<String> articleIds;
+    private List<String> articleSlugs;
 }

@@ -18,5 +18,5 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 public class TopEventComponentDTO extends ComponentDTO {
     private String title;
-    private String eventId;
+    private String eventSlug;
 }

@@ -92,12 +92,12 @@ export default function EditPageForm({ params }: { params: Promise<{ id: string 
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Edit Page</h1>
         <button
           onClick={() => setShowDeleteConfirm(true)}
           disabled={deleting}
-          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400"
+          className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-gray-400 text-sm font-semibold font-sans self-start sm:self-auto"
         >
           Delete Page
         </button>

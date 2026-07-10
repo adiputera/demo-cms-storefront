@@ -149,16 +149,16 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
+    <div className="p-2 sm:p-6">
+      <div className="mb-6 flex flex-col gap-2">
         <button
           onClick={() => router.push('/cms/pages')}
-          className="text-blue-600 hover:text-blue-800 mb-4"
+          className="text-blue-600 hover:text-blue-800 mb-2 self-start font-semibold text-sm font-sans"
         >
           ← Back to Pages
         </button>
         <h1 className="text-3xl font-bold text-gray-900">Manage Page: {page.title}</h1>
-        <p className="text-gray-600 mt-2">Slug: {page.slug}</p>
+        <p className="text-sm text-gray-600 font-mono bg-gray-50 border border-gray-250 rounded px-2.5 py-1.5 self-start">Slug: {page.slug}</p>
       </div>
 
       {error && (
@@ -169,11 +169,11 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
 
       {/* Slots Section */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Slots</h2>
           <button
             onClick={() => setShowAddSlot(true)}
-            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold text-sm font-sans transition-colors self-start sm:self-auto"
           >
             + Add Slot
           </button>
@@ -184,37 +184,39 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
         ) : (
           <div className="space-y-6">
             {slots.map((slot) => (
-              <div key={slot.id} className="border border-gray-300 rounded-lg p-6 bg-white">
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-3">
+              <div key={slot.id} className="border border-gray-250 rounded-xl p-4 sm:p-6 bg-white shadow-sm">
+                <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start gap-4 mb-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                     <div>
                       <h3 className="text-xl font-bold text-gray-900">{slot.name}</h3>
-                      <p className="text-sm text-gray-500">Code: {slot.code}</p>
+                      <p className="text-sm text-gray-500 font-mono mt-0.5">Code: {slot.code}</p>
                     </div>
-                    {slot.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
-                    {slot.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
-                    {slot.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
+                    <div className="flex gap-2">
+                      {slot.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
+                      {slot.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
+                      {slot.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
+                    </div>
                   </div>
-                  <div className="space-x-2">
+                  <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end border-t pt-4 lg:border-t-0 lg:pt-0">
                     <button
                       onClick={() => {
                         setSelectedSlot(slot);
                         setShowAddComponent(true);
                       }}
-                      className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                      className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded hover:bg-blue-700 transition-colors"
                     >
                       + Add Component
                     </button>
                     <button
                       onClick={() => handleDeleteSlot(slot.id)}
-                      className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+                      className="px-3 py-1.5 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 transition-colors"
                     >
                       Delete Slot
                     </button>
                     <SyncSingleItemButton
                       entityType="Slot"
                       itemId={slot.id}
-                      className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                      className="px-3 py-1.5 bg-green-600 text-white text-xs font-semibold rounded hover:bg-green-700 transition-colors"
                     />
                   </div>
                 </div>
@@ -223,60 +225,62 @@ export default function PageManagementPage({ params }: { params: Promise<{ id: s
                 {slot.components.length === 0 ? (
                   <p className="text-gray-500 text-sm">No components in this slot</p>
                 ) : (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {slot.components
                       .sort((a, b) => a.sortOrder - b.sortOrder)
                       .map((component, index) => (
                         <div
                           key={component.id}
-                          className="border border-gray-200 rounded p-4 bg-gray-50"
+                          className="border border-gray-200 rounded-xl p-4 bg-gray-50/50 hover:bg-gray-50 transition-colors"
                         >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3">
-                                <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
+                          <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="px-2 py-0.5 bg-purple-100 text-purple-800 text-xs font-semibold rounded">
                                   {component.type}
                                 </span>
-                                <span className="font-semibold text-gray-900">{component.name}</span>
-                                <span className="text-xs text-gray-500">#{component.sortOrder}</span>
-                                {component.syncStatus === 'SYNCED' && <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">🟢 Synced</span>}
-                                {component.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">🟡 Out of Sync</span>}
-                                {component.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">⚪ Not Synced</span>}
+                                <span className="font-bold text-gray-900 truncate">{component.name}</span>
+                                <span className="text-xs text-gray-500 font-mono">#{component.sortOrder}</span>
+                                <div className="flex gap-1.5">
+                                  {component.syncStatus === 'SYNCED' && <span className="px-2 py-0.5 bg-green-100 text-green-800 text-[10px] font-semibold rounded-full">🟢 Synced</span>}
+                                  {component.syncStatus === 'OUT_OF_SYNC' && <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-[10px] font-semibold rounded-full">🟡 Out of Sync</span>}
+                                  {component.syncStatus === 'NOT_SYNCED' && <span className="px-2 py-0.5 bg-gray-100 text-gray-800 text-[10px] font-semibold rounded-full">⚪ Not Synced</span>}
+                                </div>
                               </div>
-                              <p className="text-sm text-gray-600 mt-1">UID: {component.uid}</p>
+                              <p className="text-xs text-gray-500 font-mono mt-1">UID: {component.uid}</p>
                               <ComponentPreview component={component} />
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2 w-full lg:w-auto justify-start lg:justify-end border-t pt-3 lg:border-t-0 lg:pt-0">
                               <button
                                 onClick={() => handleMoveComponent(slot.id, component.id, 'up')}
                                 disabled={index === 0}
-                                className="px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 ↑
                               </button>
                               <button
                                 onClick={() => handleMoveComponent(slot.id, component.id, 'down')}
                                 disabled={index === slot.components.length - 1}
-                                className="px-2 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-2.5 py-1 text-xs bg-gray-200 text-gray-700 font-semibold rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 ↓
                               </button>
                               <button
                                 onClick={() => setEditingComponent(component)}
-                                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                                className="px-3 py-1 text-xs font-semibold bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                               >
                                 Edit
                               </button>
                               <button
                                 onClick={() => handleDeleteComponent(slot.id, component.id)}
-                                className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+                                className="px-3 py-1 text-xs font-semibold bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                               >
                                 Remove
                               </button>
                               <SyncSingleItemButton
                                 entityType="Component"
                                 itemId={component.id}
-                                className="px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700"
+                                className="px-3 py-1 text-xs font-semibold bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                               />
                             </div>
                           </div>
@@ -517,14 +521,15 @@ function ComponentFormModal({
             const val = component?.[field.name];
             if (field.type === 'array_string') {
               initialFields[field.name] = Array.isArray(val) ? val.join(', ') : val || '';
-            } else if (field.type.startsWith('multiple_items:') || field.type.startsWith('item:')) {
-              if (field.type.startsWith('item:')) {
+            } else if (field.type === 'reference') {
+              const isMultiple = field.referenceCardinality === 'MULTIPLE';
+              if (!isMultiple) {
                 initialFields[field.name] = val || '';
               } else {
                 initialFields[field.name] = typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : (Array.isArray(val) ? val : []);
               }
 
-              const itemType = field.type.split(':')[1];
+              const itemType = field.referenceTarget;
               if (!newMetadata[itemType]) {
                 try {
                   const meta = await cmsApiClient.getSearchMetadata(itemType);
@@ -589,10 +594,13 @@ function ComponentFormModal({
           parsedFields[field.name] = typeof val === 'string'
             ? val.split(',').map((s: string) => s.trim()).filter(Boolean)
             : val || [];
-        } else if (field.type.startsWith('multiple_items:')) {
-          parsedFields[field.name] = Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
-        } else if (field.type.startsWith('item:')) {
-          parsedFields[field.name] = val || null;
+        } else if (field.type === 'reference') {
+          const isMultiple = field.referenceCardinality === 'MULTIPLE';
+          if (isMultiple) {
+            parsedFields[field.name] = Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : []);
+          } else {
+            parsedFields[field.name] = val || null;
+          }
         } else if (field.type === 'boolean') {
           parsedFields[field.name] = !!val;
         } else {
@@ -669,14 +677,14 @@ function ComponentFormModal({
                   required={field.required}
                 />
               </div>
-            ) : field.type.startsWith('multiple_items:') || field.type.startsWith('item:') ? (
+            ) : field.type === 'reference' ? (
               <div className="space-y-2 mt-2">
-                {searchMetadata[field.type.split(':')[1]]?.fields?.map((metaField: any) => (
+                {searchMetadata[field.referenceTarget]?.fields?.map((metaField: any) => (
                   <div key={metaField.name} className="flex gap-2 mb-2">
                     <select
-                      value={searchCriteria[field.type.split(':')[1]]?.[metaField.name]?.operator || (metaField.type === 'number' ? 'EQUALS' : 'CONTAINS')}
+                      value={searchCriteria[field.referenceTarget]?.[metaField.name]?.operator || (metaField.type === 'number' ? 'EQUALS' : 'CONTAINS')}
                       onChange={(e) => {
-                        const itemType = field.type.split(':')[1];
+                        const itemType = field.referenceTarget;
                         setSearchCriteria(prev => ({
                           ...prev,
                           [itemType]: {
@@ -702,9 +710,9 @@ function ComponentFormModal({
                     <input
                       type="text"
                       placeholder={`Search ${metaField.displayName}...`}
-                      value={searchCriteria[field.type.split(':')[1]]?.[metaField.name]?.value || ''}
+                      value={searchCriteria[field.referenceTarget]?.[metaField.name]?.value || ''}
                       onChange={(e) => {
-                        const itemType = field.type.split(':')[1];
+                        const itemType = field.referenceTarget;
                         setSearchCriteria(prev => ({
                           ...prev,
                           [itemType]: {
@@ -722,11 +730,11 @@ function ComponentFormModal({
                 ))}
 
                 <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md p-2 space-y-2 bg-gray-50">
-                  {(!searchResults[field.type.split(':')[1]] || searchResults[field.type.split(':')[1]].length === 0) && (
+                  {(!searchResults[field.referenceTarget] || searchResults[field.referenceTarget].length === 0) && (
                     <p className="text-sm text-gray-500">No items found.</p>
                   )}
-                  {searchResults[field.type.split(':')[1]]?.map((item: any, idx: number) => {
-                    const isMultiple = field.type.startsWith('multiple_items:');
+                  {searchResults[field.referenceTarget]?.map((item: any, idx: number) => {
+                    const isMultiple = field.referenceCardinality === 'MULTIPLE';
                     const isChecked = isMultiple
                       ? (fields[field.name] || []).includes(item.id)
                       : fields[field.name] === item.id;

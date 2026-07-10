@@ -313,6 +313,12 @@ public class ComponentManagementController {
         paragraph.setContent(req.getContent());
     }
 
+    /**
+     * Creates a new ProductCarouselComponent from the request.
+     *
+     * @param request The creation request.
+     * @return The created component.
+     */
     private ProductCarouselComponent createProductCarouselComponent(CreateComponentRequest request) {
         CreateProductCarouselComponentRequest req = (CreateProductCarouselComponentRequest) request;
         ProductCarouselComponent carousel = new ProductCarouselComponent();
@@ -323,6 +329,12 @@ public class ComponentManagementController {
         return carousel;
     }
 
+    /**
+     * Updates an existing ProductCarouselComponent.
+     *
+     * @param carousel The component to update.
+     * @param req The update request.
+     */
     private void updateProductCarouselComponent(ProductCarouselComponent carousel, CreateProductCarouselComponentRequest req) {
         carousel.setTitle(req.getTitle());
         if (req.getProductCodes() != null) {
@@ -393,8 +405,8 @@ public class ComponentManagementController {
         CreateLatestEventComponentRequest req = objectMapper.convertValue(request, CreateLatestEventComponentRequest.class);
         LatestEventComponent component = new LatestEventComponent();
         component.setTitle(req.getTitle());
-        if (req.getEventIds() != null) {
-            component.setEventIds(String.join(",", req.getEventIds()));
+        if (req.getEventSlugs() != null) {
+            component.setEventSlugs(String.join(",", req.getEventSlugs()));
         }
         return component;
     }
@@ -402,10 +414,10 @@ public class ComponentManagementController {
     private void updateLatestEventComponent(LatestEventComponent component, CreateComponentRequest request) {
         CreateLatestEventComponentRequest req = objectMapper.convertValue(request, CreateLatestEventComponentRequest.class);
         if (req.getTitle() != null) component.setTitle(req.getTitle());
-        if (req.getEventIds() != null) {
-            component.setEventIds(String.join(",", req.getEventIds()));
+        if (req.getEventSlugs() != null) {
+            component.setEventSlugs(String.join(",", req.getEventSlugs()));
         } else {
-            component.setEventIds(null);
+            component.setEventSlugs(null);
         }
     }
 
@@ -413,18 +425,18 @@ public class ComponentManagementController {
         CreateTrendingArticleComponentRequest req = (CreateTrendingArticleComponentRequest) request;
         TrendingArticleComponent trending = new TrendingArticleComponent();
         trending.setTitle(req.getTitle());
-        if (req.getArticleIds() != null) {
-            trending.setArticleIds(String.join(",", req.getArticleIds()));
+        if (req.getArticleSlugs() != null) {
+            trending.setArticleSlugs(String.join(",", req.getArticleSlugs()));
         }
         return trending;
     }
 
     private void updateTrendingArticleComponent(TrendingArticleComponent trending, CreateTrendingArticleComponentRequest req) {
         trending.setTitle(req.getTitle());
-        if (req.getArticleIds() != null) {
-            trending.setArticleIds(String.join(",", req.getArticleIds()));
+        if (req.getArticleSlugs() != null) {
+            trending.setArticleSlugs(String.join(",", req.getArticleSlugs()));
         } else {
-            trending.setArticleIds(null);
+            trending.setArticleSlugs(null);
         }
     }
 
@@ -432,13 +444,13 @@ public class ComponentManagementController {
         CreateTopEventComponentRequest req = (CreateTopEventComponentRequest) request;
         TopEventComponent topEvent = new TopEventComponent();
         topEvent.setTitle(req.getTitle());
-        topEvent.setEventId(req.getEventId());
+        topEvent.setEventSlug(req.getEventSlug());
         return topEvent;
     }
 
     private void updateTopEventComponent(TopEventComponent topEvent, CreateTopEventComponentRequest req) {
         topEvent.setTitle(req.getTitle());
-        topEvent.setEventId(req.getEventId());
+        topEvent.setEventSlug(req.getEventSlug());
     }
 
     @GetMapping("/types")

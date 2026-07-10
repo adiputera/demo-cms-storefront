@@ -6,6 +6,7 @@ import id.adiputera.demo.cms.admin.dto.ComponentTypeInfo;
 import id.adiputera.demo.cms.admin.exception.ResourceNotFoundException;
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
@@ -36,6 +37,9 @@ public class ComponentSchemaService {
     private final List<ComponentTypeInfo> typeInfos = new ArrayList<>();
     private final Map<String, ComponentSchema> schemaMap = new HashMap<>();
 
+    /**
+     * Initializes component schemas from JPA metamodel entities.
+     */
     @PostConstruct
     public void init() {
         log.info("Initializing ComponentSchemaService...");
@@ -64,13 +68,15 @@ public class ComponentSchemaService {
                     for (Field field : javaType.getDeclaredFields()) {
                         if (field.isAnnotationPresent(CmsField.class)) {
                             CmsField fieldMetadata = field.getAnnotation(CmsField.class);
-                            fields.add(new ComponentField(
-                                    field.getName(),
-                                    fieldMetadata.displayName(),
-                                    fieldMetadata.type(),
-                                    fieldMetadata.required(),
-                                    fieldMetadata.placeholder()
-                            ));
+                             fields.add(new ComponentField(
+                                     field.getName(),
+                                     fieldMetadata.displayName(),
+                                     fieldMetadata.type().name().toLowerCase(),
+                                     fieldMetadata.required(),
+                                     fieldMetadata.placeholder(),
+                                     fieldMetadata.type() == CmsFieldType.REFERENCE ? fieldMetadata.targetEntity().getSimpleName().toLowerCase() : null,
+                                     fieldMetadata.type() == CmsFieldType.REFERENCE ? fieldMetadata.cardinality().name() : null
+                             ));
                         }
                     }
                     
@@ -94,10 +100,21 @@ public class ComponentSchemaService {
         log.info("Registered {} CMS Components.", typeInfos.size());
     }
 
+    /**
+     * Gets all registered component type information.
+     *
+     * @return A list of component type info.
+     */
     public List<ComponentTypeInfo> getComponentTypes() {
         return typeInfos;
     }
 
+    /**
+     * Gets the component schema for a specific type code.
+     *
+     * @param type The component type string.
+     * @return The component schema.
+     */
     public ComponentSchema getComponentSchema(String type) {
         ComponentSchema schema = schemaMap.get(type.toUpperCase());
         if (schema == null) {

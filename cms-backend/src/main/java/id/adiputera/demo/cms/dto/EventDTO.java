@@ -1,5 +1,7 @@
 package id.adiputera.demo.cms.dto;
 
+import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -20,5 +22,6 @@ public class EventDTO {
     private String slug;
     private String description;
     private String location;
+    private LocalDateTime eventDate;
     private String syncStatus;
 }

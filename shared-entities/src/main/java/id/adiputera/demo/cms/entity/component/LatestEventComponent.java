@@ -2,8 +2,10 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
+import id.adiputera.demo.cms.entity.Event;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -31,12 +33,12 @@ public class LatestEventComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "e.g., Upcoming Events")
+    @CmsField(displayName = "Title", type = CmsFieldType.STRING, required = true, placeholder = "e.g., Upcoming Events")
     private String title;
 
-    @Column(name = "event_ids", columnDefinition = "TEXT")
-    @CmsField(displayName = "Events", type = "multiple_items:event", required = true, placeholder = "Select events...")
-    private String eventIds;
+    @Column(name = "event_slugs", columnDefinition = "TEXT")
+    @CmsField(displayName = "Events", type = CmsFieldType.REFERENCE, targetEntity = Event.class, cardinality = id.adiputera.demo.cms.annotation.ReferenceCardinality.MULTIPLE, required = true, placeholder = "Select events...")
+    private String eventSlugs;
 
     @Override
     public ComponentType getType() {

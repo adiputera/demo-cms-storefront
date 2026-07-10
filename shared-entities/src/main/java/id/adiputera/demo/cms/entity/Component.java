@@ -1,5 +1,7 @@
 package id.adiputera.demo.cms.entity;
 
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Inheritance;
@@ -36,18 +38,46 @@ public abstract class Component extends CatalogAwareModel {
         return getUid();
     }
 
+    @Override
+    public String getSyncKeyFieldName() {
+        return "uid";
+    }
+
     @NotBlank(message = "UID is required")
     @Size(max = 100)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Component UID",
+        type = CmsFieldType.STRING,
+        required = true,
+        editableOnUpdate = false,
+        searchable = true,
+        order = 1
+    )
     private String uid;
 
     @NotBlank(message = "Component name is required")
     @Size(max = 255)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Component Name",
+        type = CmsFieldType.STRING,
+        required = true,
+        searchable = true,
+        order = 2
+    )
     private String name;
 
     @NotNull(message = "Component type is required")
     @Column(name = "type", nullable = false, length = 50)
+    @CmsField(
+        displayName = "Component Type",
+        type = CmsFieldType.STRING,
+        required = false,
+        editableOnUpdate = false,
+        searchable = true,
+        order = 3
+    )
     private String type;
 
 

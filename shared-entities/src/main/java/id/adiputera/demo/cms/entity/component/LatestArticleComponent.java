@@ -2,6 +2,7 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
 import jakarta.persistence.Column;
@@ -33,13 +34,13 @@ public class LatestArticleComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "e.g., Latest News")
+    @CmsField(displayName = "Title", type = CmsFieldType.STRING, required = true, placeholder = "e.g., Latest News")
     private String title;
 
     @Min(1)
     @Max(20)
     @Column(name = "article_count")
-    @CmsField(displayName = "Number of Articles", type = "number", required = true, placeholder = "e.g., 5")
+    @CmsField(displayName = "Number of Articles", type = CmsFieldType.NUMBER, required = true, placeholder = "e.g., 5")
     private Integer articleCount;
 
     @Override

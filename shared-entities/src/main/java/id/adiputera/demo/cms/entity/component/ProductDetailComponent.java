@@ -1,5 +1,7 @@
 package id.adiputera.demo.cms.entity.component;
 
+import id.adiputera.demo.cms.annotation.CmsFieldType;
+
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
 import id.adiputera.demo.cms.entity.Component;
@@ -31,15 +33,15 @@ public class ProductDetailComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Title (Optional)", type = "string", required = false, placeholder = "Product Details Override Title")
+    @CmsField(displayName = "Title (Optional)", type = CmsFieldType.STRING, placeholder = "Product Details Override Title")
     private String title;
 
     @Column(name = "show_price")
-    @CmsField(displayName = "Show Price", type = "boolean", required = false, placeholder = "true")
+    @CmsField(displayName = "Show Price", type = CmsFieldType.BOOLEAN, placeholder = "true")
     private Boolean showPrice;
 
     @Column(name = "show_description")
-    @CmsField(displayName = "Show Description", type = "boolean", required = false, placeholder = "true")
+    @CmsField(displayName = "Show Description", type = CmsFieldType.BOOLEAN, placeholder = "true")
     private Boolean showDescription;
 
     @Override

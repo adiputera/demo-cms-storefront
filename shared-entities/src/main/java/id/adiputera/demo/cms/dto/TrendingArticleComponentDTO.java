@@ -17,7 +17,7 @@ import java.util.List;
 @SuperBuilder
 public class TrendingArticleComponentDTO extends ComponentDTO {
     private String title;
-    private List<String> articleIds;
+    private List<String> articleSlugs;
 
     public TrendingArticleComponentDTO() {
         super();

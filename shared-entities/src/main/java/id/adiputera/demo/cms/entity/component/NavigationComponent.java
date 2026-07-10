@@ -2,6 +2,7 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
 import jakarta.persistence.Column;
@@ -33,18 +34,18 @@ public class NavigationComponent extends Component {
     @NotBlank(message = "Display text is required")
     @Size(max = 255)
     @Column(name = "display_text", nullable = false)
-    @CmsField(displayName = "Display Text", type = "string", required = true, placeholder = "Link Label")
+    @CmsField(displayName = "Display Text", type = CmsFieldType.STRING, required = true, placeholder = "Link Label")
     private String displayText;
 
     @NotBlank(message = "URL is required")
     @Size(max = 500)
     @Column(name = "url", nullable = false)
-    @CmsField(displayName = "URL", type = "string", required = true, placeholder = "/about-us")
+    @CmsField(displayName = "URL", type = CmsFieldType.STRING, required = true, placeholder = "/about-us")
     private String url;
 
     @Size(max = 100)
     @Column(name = "icon")
-    @CmsField(displayName = "Icon Name", type = "string", required = false, placeholder = "home")
+    @CmsField(displayName = "Icon Name", type = CmsFieldType.STRING, placeholder = "home")
     private String icon;
 
     @Override

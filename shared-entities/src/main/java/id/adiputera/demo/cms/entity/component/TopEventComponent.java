@@ -2,8 +2,10 @@ package id.adiputera.demo.cms.entity.component;
 
 import id.adiputera.demo.cms.annotation.CmsComponent;
 import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import id.adiputera.demo.cms.entity.Component;
 import id.adiputera.demo.cms.entity.ComponentType;
+import id.adiputera.demo.cms.entity.Event;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -31,12 +33,12 @@ public class TopEventComponent extends Component {
 
     @Size(max = 255)
     @Column(name = "title")
-    @CmsField(displayName = "Title", type = "string", required = true, placeholder = "e.g., Don't Miss This Event")
+    @CmsField(displayName = "Title", type = CmsFieldType.STRING, required = true, placeholder = "e.g., Don't Miss This Event")
     private String title;
 
-    @Column(name = "event_id")
-    @CmsField(displayName = "Featured Event", type = "item:event", required = true, placeholder = "Select an event...")
-    private String eventId;
+    @Column(name = "event_slug")
+    @CmsField(displayName = "Featured Event", type = CmsFieldType.REFERENCE, targetEntity = Event.class, required = true, placeholder = "Select an event...")
+    private String eventSlug;
 
     @Override
     public ComponentType getType() {

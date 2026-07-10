@@ -16,13 +16,13 @@ export default async function ProductsListPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           <SyncButton catalogId="productCatalog" />
           <Link
             href="/cms/products/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold font-sans"
           >
             Create Product
           </Link>
@@ -64,14 +64,14 @@ export default async function ProductsListPage() {
                   {product.code}
                 </code>
                 <p className="mt-2 text-gray-600 text-sm line-clamp-2">{product.description}</p>
-                <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xl font-bold text-blue-600">
+                <div className="mt-3 flex items-center justify-between border-t pt-3 border-gray-100">
+                  <span className="text-xl font-bold text-blue-600 font-sans">
                     ${product.price.toFixed(2)}
                   </span>
                   <div className="flex gap-2">
                     <Link
                       href={`/cms/products/${product.id}/edit`}
-                      className="text-sm text-gray-600 hover:text-gray-800"
+                      className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 text-xs font-semibold rounded-md transition-colors font-sans"
                     >
                       Edit
                     </Link>

@@ -16,13 +16,13 @@ export default async function ArticlesListPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Articles</h1>
-        <div className="flex gap-4">
+        <div className="flex flex-wrap gap-3">
           <SyncButton catalogId="articleCatalog" />
           <Link
             href="/cms/articles/new"
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-semibold font-sans"
           >
             Create Article
           </Link>
@@ -54,13 +54,13 @@ export default async function ArticlesListPage() {
                 <p className="text-xs text-blue-600 mb-2 font-mono bg-blue-50 px-2 py-1 rounded inline-block">/{article.slug}</p>
                 <p className="mt-2 text-gray-600 text-sm line-clamp-3">{article.body}</p>
                 <div className="mt-4 flex items-center justify-between border-t pt-3">
-                  <span className="text-sm font-medium text-gray-500">
+                  <span className="text-sm font-medium text-gray-500 font-sans">
                     ID: {article.id}
                   </span>
                   <div className="flex gap-3">
                     <Link
                       href={`/cms/articles/${article.id}/edit`}
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-800"
+                      className="px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-800 text-xs font-semibold rounded-md transition-colors font-sans"
                     >
                       Edit
                     </Link>

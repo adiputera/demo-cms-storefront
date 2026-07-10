@@ -1,16 +1,21 @@
 package id.adiputera.demo.cms.admin.service;
 
+import id.adiputera.demo.cms.admin.dto.CmsFieldMetadataDTO;
+import id.adiputera.demo.cms.admin.dto.CmsRowDTO;
+import id.adiputera.demo.cms.admin.dto.ItemMetadataDTO;
 import id.adiputera.demo.cms.admin.dto.ItemSearchMetadataDTO;
+import id.adiputera.demo.cms.admin.dto.ModelInfoDTO;
 import id.adiputera.demo.cms.admin.dto.SearchCriteria;
 import id.adiputera.demo.cms.admin.dto.SearchField;
 import id.adiputera.demo.cms.admin.dto.SearchOperator;
+import id.adiputera.demo.cms.admin.metadata.CmsFieldMetadata;
+import id.adiputera.demo.cms.admin.metadata.CmsTypeMetadata;
+import id.adiputera.demo.cms.admin.metadata.CmsTypeRegistry;
 import id.adiputera.demo.cms.annotation.CmsField;
 import id.adiputera.demo.cms.dto.ItemSearchResultDTO;
 import id.adiputera.demo.cms.entity.ItemModel;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import jakarta.persistence.metamodel.EntityType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,11 +26,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * Item Search Service class.
+ * Item Search Service class providing dynamic search capabilities.
+ * Manages generic queries, metadata discovery, and row mappings.
  *
  * @author Yusuf F. Adiputera
  */
@@ -35,22 +40,66 @@ import java.util.stream.Collectors;
 public class ItemSearchService {
 
     private final EntityManager entityManager;
-
-    private final Map<String, Class<?>> TYPE_TO_CLASS = new ConcurrentHashMap<>();
+    private final CmsTypeRegistry cmsTypeRegistry;
+    private final GenericEntityMapper genericEntityMapper;
 
     /**
-     * Initializes the dynamic model map by finding all entities extending
-     * ItemModel.
+     * Retrieves all registered available model types.
+     *
+     * @return A list of {@link ModelInfoDTO} representing available models.
      */
-    @PostConstruct
-    public void init() {
-        for (EntityType<?> entityType : entityManager.getMetamodel().getEntities()) {
-            Class<?> javaType = entityType.getJavaType();
-            if (ItemModel.class.isAssignableFrom(javaType)) {
-                TYPE_TO_CLASS.put(javaType.getSimpleName().toLowerCase(), javaType);
-            }
+    public List<ModelInfoDTO> getAvailableTypes() {
+        return cmsTypeRegistry.getAllTypes().stream()
+                .map(meta -> ModelInfoDTO.builder()
+                        .type(meta.getCode())
+                        .displayName(meta.getDisplayName())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Retrieves unified metadata (searchable fields and display columns) for a given type.
+     *
+     * @param type The lower-case model type code.
+     * @return The {@link ItemMetadataDTO} containing dynamic lists of fields, or null if type not registered.
+     */
+    public ItemMetadataDTO getUnifiedMetadata(String type) {
+        CmsTypeMetadata meta = cmsTypeRegistry.getTypeMetadata(type);
+        if (meta == null) {
+            return null;
         }
-        log.info("Initialized ItemSearchService with dynamic model map: {}", TYPE_TO_CLASS.keySet());
+
+        List<SearchField> searchable = meta.getFields().stream()
+                .filter(CmsFieldMetadata::isSearchable)
+                .map(f -> new SearchField(f.getName(), f.getDisplayName(), f.getType().name().toLowerCase(), f.getOrder()))
+                .collect(Collectors.toList());
+
+        List<SearchField> columnShown = meta.getFields().stream()
+                .filter(CmsFieldMetadata::isShowAsColumn)
+                .map(f -> new SearchField(f.getName(), f.getDisplayName(), f.getType().name().toLowerCase(), f.getOrder()))
+                .collect(Collectors.toList());
+
+        List<CmsFieldMetadataDTO> fields = meta.getFields().stream()
+                .map(f -> CmsFieldMetadataDTO.builder()
+                        .name(f.getName())
+                        .displayName(f.getDisplayName())
+                        .type(f.getType().name())
+                        .required(f.isRequired())
+                        .editableOnUpdate(f.isEditableOnUpdate())
+                        .placeholder(f.getPlaceholder())
+                        .reference(f.getTargetEntity() != null && f.getTargetEntity() != id.adiputera.demo.cms.entity.ItemModel.class ? f.getTargetEntity().getName() : null)
+                        .referenceCardinality(f.getCardinality() != null ? f.getCardinality().name() : null)
+                        .order(f.getOrder())
+                        .build())
+                .collect(Collectors.toList());
+
+        return ItemMetadataDTO.builder()
+                .code(meta.getCode())
+                .displayName(meta.getDisplayName())
+                .searchable(searchable)
+                .columnShown(columnShown)
+                .fields(fields)
+                .build();
     }
 
     /**
@@ -67,7 +116,7 @@ public class ItemSearchService {
                 if (field.isAnnotationPresent(CmsField.class)) {
                     CmsField col = field.getAnnotation(CmsField.class);
                     if (col.searchable()) {
-                        fields.add(new SearchField(field.getName(), col.displayName(), col.type(), col.order()));
+                        fields.add(new SearchField(field.getName(), col.displayName(), col.type().name().toLowerCase(), col.order()));
                     }
                 }
             }
@@ -84,11 +133,11 @@ public class ItemSearchService {
      * @return The search metadata DTO.
      */
     public ItemSearchMetadataDTO getSearchMetadata(String type) {
-        Class<?> clazz = TYPE_TO_CLASS.get(type.toLowerCase());
-        if (clazz == null) {
+        CmsTypeMetadata meta = cmsTypeRegistry.getTypeMetadata(type);
+        if (meta == null) {
             return new ItemSearchMetadataDTO(List.of());
         }
-        return new ItemSearchMetadataDTO(getSearchFields(clazz));
+        return new ItemSearchMetadataDTO(getSearchFields(meta.getEntityClass()));
     }
 
     /**
@@ -114,15 +163,33 @@ public class ItemSearchService {
      * @param criteria The list of search criteria.
      * @return A list of matching item search result DTOs.
      */
-    @SuppressWarnings("unchecked")
     public List<ItemSearchResultDTO> searchItems(String type, List<SearchCriteria> criteria) {
-        Class<?> clazz = TYPE_TO_CLASS.get(type.toLowerCase());
-
-        if (clazz == null) {
+        CmsTypeMetadata meta = cmsTypeRegistry.getTypeMetadata(type);
+        if (meta == null) {
             return List.of();
         }
+        List<?> results = executeQuery(meta.getEntityClass(), criteria);
+        return results.stream()
+                .map(this::mapToDTO)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
-        return executeSearch(clazz, criteria);
+    /**
+     * Generic dynamic search executing criteria query and returning polymorphic row DTOs.
+     *
+     * @param type     The model type string (e.g. "product").
+     * @param criteria The search criteria.
+     * @return A list of generic {@link CmsRowDTO}s.
+     */
+    @SuppressWarnings("unchecked")
+    public List<CmsRowDTO> searchItemsForList(String type, List<SearchCriteria> criteria) {
+        CmsTypeMetadata meta = cmsTypeRegistry.getTypeMetadata(type);
+        if (meta == null) {
+            return List.of();
+        }
+        List<?> entities = executeQuery(meta.getEntityClass(), criteria);
+        return genericEntityMapper.mapToRows((List<? extends ItemModel>) entities, meta);
     }
 
     /**
@@ -209,14 +276,14 @@ public class ItemSearchService {
     }
 
     /**
-     * Executes the JPQL search query for the specified class and criteria.
+     * Executes the JPQL search query and returns the matching entity entities.
      *
      * @param clazz    The target class to query.
      * @param criteria The list of search criteria.
      * @param <T>      The entity type.
-     * @return A list of search result DTOs.
+     * @return A list of entity objects.
      */
-    private <T> List<ItemSearchResultDTO> executeSearch(Class<T> clazz, List<SearchCriteria> criteria) {
+    private <T> List<T> executeQuery(Class<T> clazz, List<SearchCriteria> criteria) {
         Set<String> allowedFields = getAllowedFields(clazz);
         StringBuilder jpql = new StringBuilder("SELECT x FROM ").append(clazz.getSimpleName()).append(" x WHERE 1=1");
         Map<String, Object> params = new HashMap<>();
@@ -264,9 +331,6 @@ public class ItemSearchService {
 
         @SuppressWarnings("unchecked")
         List<T> results = query.getResultList();
-        return results.stream()
-                .map(this::mapToDTO)
-                .filter(java.util.Objects::nonNull)
-                .collect(Collectors.toList());
+        return results;
     }
 }

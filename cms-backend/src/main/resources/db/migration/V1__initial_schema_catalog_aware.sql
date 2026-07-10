@@ -1,6 +1,6 @@
 -- Headless CMS Database Schema
 -- Version: 1.0.0
--- Description: Initial schema for catalogs, pages, slots, components, and products
+-- Description: Initial schema for catalogs, pages, slots, components, products, articles, and events
 
 -- =====================================================
 -- CATALOGS TABLE
@@ -9,11 +9,11 @@ CREATE TABLE catalogs (
     id BIGSERIAL PRIMARY KEY,
     catalog_id VARCHAR(100) NOT NULL,
     version VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT uq_catalogs_id_version UNIQUE (catalog_id, version)
 );
-
 CREATE INDEX idx_catalog_id_version ON catalogs(catalog_id, version);
-
 COMMENT ON TABLE catalogs IS 'Represents a catalog version (e.g. contentCatalog STAGED or ONLINE)';
 
 -- =====================================================
@@ -26,7 +26,6 @@ CREATE TABLE pages (
     title VARCHAR(255) NOT NULL,
     breadcrumb_title VARCHAR(255) NOT NULL,
     
-    -- SEO Fields
     meta_title VARCHAR(255),
     meta_description VARCHAR(500),
     meta_keywords VARCHAR(500),
@@ -34,21 +33,18 @@ CREATE TABLE pages (
     robots_index BOOLEAN NOT NULL DEFAULT TRUE,
     robots_follow BOOLEAN NOT NULL DEFAULT TRUE,
     
-    -- OpenGraph Fields
     og_title VARCHAR(255),
     og_description VARCHAR(500),
     og_image VARCHAR(500),
     
-    -- Audit Fields
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INTEGER NOT NULL DEFAULT 1,
     
     CONSTRAINT fk_pages_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
     CONSTRAINT uk_pages_slug_catalog UNIQUE (slug, catalog_id)
 );
-
 CREATE INDEX idx_pages_slug ON pages(slug);
-
 COMMENT ON TABLE pages IS 'CMS-managed pages with SEO metadata, scoped by catalog';
 
 -- =====================================================
@@ -64,7 +60,6 @@ CREATE TABLE page_breadcrumbs (
     
     PRIMARY KEY (page_id, breadcrumb_page_id)
 );
-
 CREATE INDEX idx_page_breadcrumbs_page ON page_breadcrumbs(page_id);
 
 -- =====================================================
@@ -77,17 +72,15 @@ CREATE TABLE slots (
     name VARCHAR(255) NOT NULL,
     page_id BIGINT NOT NULL,
     
-    -- Audit Fields
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INTEGER NOT NULL DEFAULT 1,
     
     CONSTRAINT fk_slots_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
     CONSTRAINT fk_slots_page FOREIGN KEY (page_id) REFERENCES pages(id) ON DELETE CASCADE,
     CONSTRAINT uk_slots_page_code_catalog UNIQUE (page_id, code, catalog_id)
 );
-
 CREATE INDEX idx_slots_page_code ON slots(page_id, code);
-
 COMMENT ON TABLE slots IS 'Fixed content areas on a page (e.g., hero, content, footer)';
 
 -- =====================================================
@@ -100,14 +93,13 @@ CREATE TABLE components (
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL,
     
-    -- Audit Fields
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INTEGER NOT NULL DEFAULT 1,
     
     CONSTRAINT fk_components_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
     CONSTRAINT uk_components_uid_catalog UNIQUE (uid, catalog_id)
 );
-
 COMMENT ON TABLE components IS 'Base table for all component types, scoped by catalog';
 
 -- =====================================================
@@ -123,7 +115,6 @@ CREATE TABLE slot_components (
     
     PRIMARY KEY (slot_id, component_id)
 );
-
 CREATE INDEX idx_slot_components_order ON slot_components(slot_id, sort_order);
 
 -- =====================================================
@@ -178,8 +169,37 @@ CREATE TABLE product_detail_components (
     CONSTRAINT fk_product_detail_components_base FOREIGN KEY (id) REFERENCES components(id) ON DELETE CASCADE
 );
 
+CREATE TABLE latest_article_components (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(255),
+    article_count INTEGER NOT NULL DEFAULT 3,
+    CONSTRAINT fk_latest_article_components_base FOREIGN KEY (id) REFERENCES components(id) ON DELETE CASCADE
+);
+
+CREATE TABLE trending_article_components (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(255),
+    article_slugs TEXT,
+    CONSTRAINT fk_trending_article_components_id FOREIGN KEY (id) REFERENCES components(id) ON DELETE CASCADE
+);
+
+CREATE TABLE latest_event_components (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(255),
+    event_slugs TEXT,
+    count INTEGER NOT NULL DEFAULT 3,
+    CONSTRAINT fk_latest_event_components_id FOREIGN KEY (id) REFERENCES components(id) ON DELETE CASCADE
+);
+
+CREATE TABLE top_event_components (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR(255),
+    event_slug VARCHAR(100),
+    CONSTRAINT fk_top_event_components_base FOREIGN KEY (id) REFERENCES components(id) ON DELETE CASCADE
+);
+
 -- =====================================================
--- PRODUCTS TABLE
+-- PRODUCTS, ARTICLES, EVENTS TABLES
 -- =====================================================
 CREATE TABLE products (
     id BIGSERIAL PRIMARY KEY,
@@ -190,7 +210,6 @@ CREATE TABLE products (
     price DECIMAL(10, 2) NOT NULL,
     description TEXT,
     
-    -- Audit Fields
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     sync_version INTEGER NOT NULL DEFAULT 1,
@@ -198,5 +217,38 @@ CREATE TABLE products (
     CONSTRAINT fk_products_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
     CONSTRAINT uk_products_code_catalog UNIQUE (code, catalog_id)
 );
-
 CREATE INDEX idx_products_code ON products(code);
+
+CREATE TABLE articles (
+    id BIGSERIAL PRIMARY KEY,
+    catalog_id BIGINT NOT NULL,
+    slug VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    body TEXT,
+    
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INT NOT NULL DEFAULT 1,
+    
+    CONSTRAINT fk_articles_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
+    CONSTRAINT uk_articles_slug_catalog UNIQUE (slug, catalog_id)
+);
+CREATE INDEX idx_articles_slug ON articles(slug);
+
+CREATE TABLE events (
+    id BIGSERIAL PRIMARY KEY,
+    catalog_id BIGINT NOT NULL,
+    slug VARCHAR(255) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    event_date TIMESTAMP NOT NULL,
+    location VARCHAR(255),
+    
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    sync_version INT NOT NULL DEFAULT 1,
+    
+    CONSTRAINT fk_events_catalog FOREIGN KEY (catalog_id) REFERENCES catalogs(id) ON DELETE CASCADE,
+    CONSTRAINT uk_events_slug_catalog UNIQUE (slug, catalog_id)
+);
+CREATE INDEX idx_events_slug ON events(slug);

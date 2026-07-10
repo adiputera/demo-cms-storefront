@@ -1,5 +1,7 @@
 package id.adiputera.demo.cms.entity;
 
+import id.adiputera.demo.cms.annotation.CmsField;
+import id.adiputera.demo.cms.annotation.CmsFieldType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,14 +47,34 @@ public class Slot extends CatalogAwareModel {
         return getCode() + "|" + (getPage() != null ? getPage().getSlug() : "null");
     }
 
+    @Override
+    public String getSyncKeyFieldName() {
+        return "code";
+    }
+
     @NotBlank(message = "Slot code is required")
     @Size(max = 100)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Slot Code",
+        type = CmsFieldType.STRING,
+        required = true,
+        editableOnUpdate = false,
+        searchable = true,
+        order = 1
+    )
     private String code;
 
     @NotBlank(message = "Slot name is required")
     @Size(max = 255)
     @Column(nullable = false)
+    @CmsField(
+        displayName = "Slot Name",
+        type = CmsFieldType.STRING,
+        required = true,
+        searchable = true,
+        order = 2
+    )
     private String name;
 
     // Relationships

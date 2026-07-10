@@ -16,5 +16,5 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 public class CreateTopEventComponentRequest extends CreateComponentRequest {
     private String title;
-    private String eventId;
+    private String eventSlug;
 }
