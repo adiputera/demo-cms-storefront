@@ -66,6 +66,14 @@ frontend/yarn-error.log*
 # Agent
 .agents/
 .agent/
+AGENTS.md
+.clinerules/
+.cursor/
+.github/
+.opencode/
+.windsurf/
+*.md
+skills-lock.json
 
 # Upload path
 uploads/

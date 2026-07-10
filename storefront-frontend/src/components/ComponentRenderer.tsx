@@ -5,6 +5,10 @@ import ProductCarouselComponent from '@/components/cms/ProductCarouselComponent'
 import NavigationComponent from '@/components/cms/NavigationComponent';
 import QuickMenuComponent from '@/components/cms/QuickMenuComponent';
 import ProductDetailComponent from '@/components/cms/ProductDetailComponent';
+import LatestArticleComponent from '@/components/cms/LatestArticleComponent';
+import TrendingArticleComponent from '@/components/cms/TrendingArticleComponent';
+import LatestEventComponent from '@/components/cms/LatestEventComponent';
+import TopEventComponent from '@/components/cms/TopEventComponent';
 
 const componentRegistry = {
   BANNER: BannerComponent,
@@ -13,6 +17,10 @@ const componentRegistry = {
   NAVIGATION: NavigationComponent,
   QUICK_MENU: QuickMenuComponent,
   PRODUCT_DETAIL: ProductDetailComponent,
+  LATEST_ARTICLE: LatestArticleComponent,
+  TRENDING_ARTICLE: TrendingArticleComponent,
+  LATEST_EVENT: LatestEventComponent,
+  TOP_EVENT: TopEventComponent,
 };
 
 interface ComponentRendererProps {

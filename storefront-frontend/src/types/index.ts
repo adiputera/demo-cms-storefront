@@ -1,5 +1,5 @@
 // Component Types
-export type ComponentType = 'BANNER' | 'PARAGRAPH' | 'PRODUCT_CAROUSEL' | 'NAVIGATION' | 'QUICK_MENU' | 'PRODUCT_DETAIL';
+export type ComponentType = 'BANNER' | 'PARAGRAPH' | 'PRODUCT_CAROUSEL' | 'NAVIGATION' | 'QUICK_MENU' | 'PRODUCT_DETAIL' | 'LATEST_ARTICLE' | 'TRENDING_ARTICLE' | 'LATEST_EVENT' | 'TOP_EVENT';
 
 // Base Component Interface
 export interface BaseComponent {
@@ -59,6 +59,52 @@ export interface ProductDetailComponent extends BaseComponent {
   showDescription?: boolean;
 }
 
+// Latest Article Component
+export interface LatestArticleComponent extends BaseComponent {
+  type: 'LATEST_ARTICLE';
+  title: string;
+  articleCount: number;
+}
+
+// Trending Article Component
+export interface TrendingArticleComponent extends BaseComponent {
+  type: 'TRENDING_ARTICLE';
+  title: string;
+  articleSlugs: string[];
+}
+
+// Latest Event Component
+export interface LatestEventComponent extends BaseComponent {
+  type: 'LATEST_EVENT';
+  title: string;
+  eventSlugs: string[];
+}
+
+// Top Event Component
+export interface TopEventComponent extends BaseComponent {
+  type: 'TOP_EVENT';
+  title: string;
+  eventSlug: string;
+}
+
+// Article Interface
+export interface Article {
+  id: number;
+  title: string;
+  slug: string;
+  body: string;
+}
+
+// Event Interface
+export interface Event {
+  id: number;
+  title: string;
+  slug: string;
+  description: string;
+  location: string;
+  eventDate: string;
+}
+
 // Discriminated Union for all component types
 export type Component =
   | BannerComponent
@@ -66,7 +112,11 @@ export type Component =
   | ProductCarouselComponent
   | NavigationComponent
   | QuickMenuComponent
-  | ProductDetailComponent;
+  | ProductDetailComponent
+  | LatestArticleComponent
+  | TrendingArticleComponent
+  | LatestEventComponent
+  | TopEventComponent;
 
 // Product Interface
 export interface Product {
