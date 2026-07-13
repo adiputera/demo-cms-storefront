@@ -235,13 +235,13 @@ export default function CmsForm({
         {fields
           .filter((field) => {
             // Filter out fields that are not editable for this operation
-            // editableOnCreate = required || editableOnUpdate
-            const isEditable = mode === 'create' ? (field.required || field.editableOnUpdate) : field.editableOnUpdate;
+            // Fields are assumed to be editable during creation.
+            const isEditable = mode === 'create' ? true : field.editableOnUpdate;
             return isEditable;
           })
           .map((field) => {
           const isRequired = field.required;
-          const isEditable = mode === 'create' ? (field.required || field.editableOnUpdate) : field.editableOnUpdate;
+          const isEditable = mode === 'create' ? true : field.editableOnUpdate;
 
           // Render inputs
           return (

@@ -104,30 +104,6 @@ public class ItemSearchService {
     }
 
     /**
-     * Gets all searchable fields for a given entity class.
-     *
-     * @param clazz The entity class.
-     * @return A list of search fields.
-     */
-    private List<SearchField> getSearchFields(Class<?> clazz) {
-        List<SearchField> fields = new ArrayList<>();
-        Class<?> current = clazz;
-        while (current != null && current != Object.class) {
-            for (java.lang.reflect.Field field : current.getDeclaredFields()) {
-                if (field.isAnnotationPresent(CmsField.class)) {
-                    CmsField col = field.getAnnotation(CmsField.class);
-                    if (col.searchable()) {
-                        fields.add(new SearchField(field.getName(), col.displayName(), col.type().name().toLowerCase(), col.order()));
-                    }
-                }
-            }
-            current = current.getSuperclass();
-        }
-        fields.sort(Comparator.comparingInt(SearchField::getOrder));
-        return fields;
-    }
-
-    /**
      * Gets the search metadata for a given item type.
      *
      * @param type The item type string.
@@ -138,7 +114,11 @@ public class ItemSearchService {
         if (meta == null) {
             return new ItemSearchMetadataDTO(List.of());
         }
-        return new ItemSearchMetadataDTO(getSearchFields(meta.getEntityClass()));
+        List<SearchField> fields = meta.getFields().stream()
+                .filter(CmsFieldMetadata::isSearchable)
+                .map(f -> new SearchField(f.getName(), f.getDisplayName(), f.getType().name().toLowerCase(), f.getOrder()))
+                .collect(Collectors.toList());
+        return new ItemSearchMetadataDTO(fields);
     }
 
     /**
@@ -146,12 +126,13 @@ public class ItemSearchService {
      * Includes the standard database entity identifier "id" to permit programmatic
      * lookups.
      *
-     * @param clazz The entity class.
+     * @param meta The item type metadata.
      * @return The set of allowed field names.
      */
-    private Set<String> getAllowedFields(Class<?> clazz) {
-        Set<String> allowed = getSearchFields(clazz).stream()
-                .map(SearchField::getName)
+    private Set<String> getAllowedFields(CmsTypeMetadata meta) {
+        Set<String> allowed = meta.getFields().stream()
+                .filter(CmsFieldMetadata::isSearchable)
+                .map(CmsFieldMetadata::getName)
                 .collect(Collectors.toSet());
         allowed.add("id");
         return allowed;
@@ -169,7 +150,7 @@ public class ItemSearchService {
         if (meta == null) {
             return List.of();
         }
-        List<?> results = executeQuery(meta.getEntityClass(), criteria);
+        List<?> results = executeQuery(meta, criteria);
         return results.stream()
                 .map(this::mapToDTO)
                 .filter(java.util.Objects::nonNull)
@@ -189,7 +170,7 @@ public class ItemSearchService {
         if (meta == null) {
             return List.of();
         }
-        List<?> entities = executeQuery(meta.getEntityClass(), criteria);
+        List<?> entities = executeQuery(meta, criteria);
         return genericEntityMapper.mapToRows((List<? extends ItemModel>) entities, meta);
     }
 
@@ -207,71 +188,63 @@ public class ItemSearchService {
     }
 
     /**
-     * Checks if a field in the class is of numeric type.
+     * Checks if a field is of numeric type.
      *
-     * @param clazz     The entity class.
+     * @param fieldMeta The field metadata.
      * @param fieldName The field name.
      * @return True if the field is numeric, false otherwise.
      */
-    private boolean isNumericField(Class<?> clazz, String fieldName) {
-        Class<?> current = clazz;
-        while (current != null && current != Object.class) {
-            for (java.lang.reflect.Field field : current.getDeclaredFields()) {
-                if (field.getName().equals(fieldName)) {
-                    Class<?> type = field.getType();
-                    return Number.class.isAssignableFrom(type) ||
-                            type == int.class || type == long.class ||
-                            type == double.class || type == float.class || type == short.class;
-                }
-            }
-            current = current.getSuperclass();
+    private boolean isNumericField(CmsFieldMetadata fieldMeta, String fieldName) {
+        if ("id".equals(fieldName)) {
+            return true;
         }
-        return false;
+        return fieldMeta != null && fieldMeta.getType() == id.adiputera.demo.cms.annotation.CmsFieldType.NUMBER;
     }
 
     /**
      * Converts a string parameter value to the appropriate Java type for the field.
      *
-     * @param clazz       The entity class.
+     * @param fieldMeta   The field metadata.
      * @param fieldName   The field name.
      * @param valueString The string value.
      * @return The converted object or original string if conversion fails or is not
      *         needed.
      */
-    private Object convertParamValue(Class<?> clazz, String fieldName, String valueString) {
+    private Object convertParamValue(CmsFieldMetadata fieldMeta, String fieldName, String valueString) {
         if (valueString == null) {
             return null;
         }
         String trimmed = valueString.trim();
-        try {
-            Class<?> current = clazz;
-            while (current != null && current != Object.class) {
-                for (java.lang.reflect.Field field : current.getDeclaredFields()) {
-                    if (field.getName().equals(fieldName)) {
-                        Class<?> type = field.getType();
-                        if (type == java.math.BigDecimal.class) {
-                            return new java.math.BigDecimal(trimmed);
-                        } else if (type == Integer.class || type == int.class) {
-                            return Integer.parseInt(trimmed);
-                        } else if (type == Long.class || type == long.class) {
-                            return Long.parseLong(trimmed);
-                        } else if (type == Double.class || type == double.class) {
-                            return Double.parseDouble(trimmed);
-                        } else if (type == Float.class || type == float.class) {
-                            return Float.parseFloat(trimmed);
-                        } else if (type == Short.class || type == short.class) {
-                            return Short.parseShort(trimmed);
-                        } else if (type == Boolean.class || type == boolean.class) {
-                            return Boolean.parseBoolean(trimmed);
-                        }
-                        return trimmed;
-                    }
-                }
-                current = current.getSuperclass();
+        if ("id".equals(fieldName)) {
+            try {
+                return Long.parseLong(trimmed);
+            } catch (NumberFormatException e) {
+                return trimmed;
             }
+        }
+        if (fieldMeta == null || fieldMeta.getGetter() == null) {
+            return trimmed;
+        }
+        try {
+            Class<?> type = fieldMeta.getGetter().getReturnType();
+            if (type == java.math.BigDecimal.class) {
+                return new java.math.BigDecimal(trimmed);
+            } else if (type == Integer.class || type == int.class) {
+                return Integer.parseInt(trimmed);
+            } else if (type == Long.class || type == long.class) {
+                return Long.parseLong(trimmed);
+            } else if (type == Double.class || type == double.class) {
+                return Double.parseDouble(trimmed);
+            } else if (type == Float.class || type == float.class) {
+                return Float.parseFloat(trimmed);
+            } else if (type == Short.class || type == short.class) {
+                return Short.parseShort(trimmed);
+            } else if (type == Boolean.class || type == boolean.class) {
+                return Boolean.parseBoolean(trimmed);
+            }
+            return trimmed;
         } catch (Exception e) {
-            log.warn("Could not convert value '{}' to field type for {}.{}: {}", trimmed, clazz.getSimpleName(),
-                    fieldName, e.getMessage());
+            log.warn("Could not convert value '{}' to field type for field {}: {}", trimmed, fieldName, e.getMessage());
         }
         return trimmed;
     }
@@ -279,13 +252,15 @@ public class ItemSearchService {
     /**
      * Executes the JPQL search query and returns the matching entity entities.
      *
-     * @param clazz    The target class to query.
+     * @param meta     The item type metadata.
      * @param criteria The list of search criteria.
      * @param <T>      The entity type.
      * @return A list of entity objects.
      */
-    private <T> List<T> executeQuery(Class<T> clazz, List<SearchCriteria> criteria) {
-        Set<String> allowedFields = getAllowedFields(clazz);
+    @SuppressWarnings("unchecked")
+    private <T> List<T> executeQuery(CmsTypeMetadata meta, List<SearchCriteria> criteria) {
+        Class<T> clazz = (Class<T>) meta.getEntityClass();
+        Set<String> allowedFields = getAllowedFields(meta);
         StringBuilder jpql = new StringBuilder("SELECT x FROM ").append(clazz.getSimpleName()).append(" x WHERE 1=1");
         Map<String, Object> params = new HashMap<>();
 
@@ -296,12 +271,19 @@ public class ItemSearchService {
             if (allowedFields.contains(key) && value != null && !value.trim().isEmpty()) {
                 String paramName = key + i;
                 SearchOperator operator = c.getOperator() != null ? c.getOperator() : SearchOperator.CONTAINS;
-                boolean numeric = isNumericField(clazz, key);
+                
+                final String fieldKey = key;
+                CmsFieldMetadata fieldMeta = meta.getFields().stream()
+                        .filter(f -> f.getName().equals(fieldKey))
+                        .findFirst()
+                        .orElse(null);
+                
+                boolean numeric = isNumericField(fieldMeta, key);
                 if (numeric && operator == SearchOperator.CONTAINS) {
                     operator = SearchOperator.EQUALS;
                 }
 
-                Object paramValue = convertParamValue(clazz, key, value);
+                Object paramValue = convertParamValue(fieldMeta, key, value);
 
                 switch (operator) {
                     case EQUALS:

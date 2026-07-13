@@ -1,11 +1,19 @@
 package id.adiputera.demo.cms.admin.handler;
 
 import id.adiputera.demo.cms.annotation.CmsFieldType;
+import id.adiputera.demo.cms.annotation.ReferenceCardinality;
 import id.adiputera.demo.cms.admin.metadata.CmsFieldMetadata;
+import id.adiputera.demo.cms.admin.metadata.CmsTypeMetadata;
+import id.adiputera.demo.cms.admin.metadata.CmsTypeRegistry;
 import id.adiputera.demo.cms.admin.exception.BadRequestException;
 import id.adiputera.demo.cms.entity.ItemModel;
+import id.adiputera.demo.cms.entity.CatalogAwareModel;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Root;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -24,6 +32,9 @@ public class ReferenceFieldHandler implements CmsFieldHandler {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    @Autowired
+    private CmsTypeRegistry cmsTypeRegistry;
 
     /**
      * Gets the supported CmsFieldType.
@@ -123,7 +134,7 @@ public class ReferenceFieldHandler implements CmsFieldHandler {
         }
         
         // Handle MULTIPLE String references (e.g. "mbp-16,iphone-16")
-        if (meta.getCardinality() == id.adiputera.demo.cms.annotation.ReferenceCardinality.MULTIPLE) {
+        if (meta.getCardinality() == ReferenceCardinality.MULTIPLE) {
             if (value instanceof String str) {
                 String[] parts = str.split(",");
                 List<Map<String, Object>> result = new ArrayList<>();
@@ -163,26 +174,32 @@ public class ReferenceFieldHandler implements CmsFieldHandler {
         return meta.getFormatter().format(value);
     }
 
+    /**
+     * Resolves the display name label for a referenced entity given its sync key.
+     *
+     * @param syncKey The sync key identifier.
+     * @param refClass The target class of the reference.
+     * @return The formatted label string, or the sync key itself if lookup fails.
+     */
     private String getDisplayNameFromSyncKey(String syncKey, Class<?> refClass) {
-        if (!id.adiputera.demo.cms.entity.CatalogAwareModel.class.isAssignableFrom(refClass)) {
+        if (!CatalogAwareModel.class.isAssignableFrom(refClass)) {
             return syncKey;
         }
         try {
-            id.adiputera.demo.cms.entity.CatalogAwareModel dummy = 
-                (id.adiputera.demo.cms.entity.CatalogAwareModel) refClass.getDeclaredConstructor().newInstance();
-            String fieldName = dummy.getSyncKeyFieldName();
+            CmsTypeMetadata typeMeta = cmsTypeRegistry.getTypeMetadata(refClass.getSimpleName().toLowerCase());
+            String fieldName = typeMeta != null ? typeMeta.getSyncKeyFieldName() : null;
             if (fieldName == null) {
                 return syncKey;
             }
 
-            jakarta.persistence.criteria.CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-            jakarta.persistence.criteria.CriteriaQuery<?> cq = cb.createQuery(refClass);
-            jakarta.persistence.criteria.Root<?> root = cq.from(refClass);
+            CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+            CriteriaQuery<?> cq = cb.createQuery(refClass);
+            Root<?> root = cq.from(refClass);
             cq.where(cb.equal(root.get(fieldName), syncKey));
             
-            java.util.List<?> results = entityManager.createQuery(cq).setMaxResults(1).getResultList();
+            List<?> results = entityManager.createQuery(cq).setMaxResults(1).getResultList();
             if (!results.isEmpty()) {
-                id.adiputera.demo.cms.entity.CatalogAwareModel entity = (id.adiputera.demo.cms.entity.CatalogAwareModel) results.get(0);
+                CatalogAwareModel entity = (CatalogAwareModel) results.get(0);
                 return entity.toItemSearchResultDTO().getLabel();
             }
         } catch (Exception e) {

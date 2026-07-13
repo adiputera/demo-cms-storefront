@@ -23,4 +23,5 @@ public class CmsTypeMetadata {
     private String displayName;
     private Class<?> entityClass;
     private List<CmsFieldMetadata> fields;
+    private String syncKeyFieldName;
 }

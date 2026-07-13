@@ -84,7 +84,12 @@ export default async function ProductDetailPage({ params }: ProductPageProps) {
       if (page.slots && page.slots.length > 0) {
         const slotIds = page.slots.map(slot => slot.id);
         const { slots } = await apiClient.getSlotsByIds(slotIds);
-        slotsWithComponents = slots;
+        
+        // Maintain the order defined by page.slots
+        const slotsMap = new Map(slots.map(s => [s.id, s]));
+        slotsWithComponents = page.slots
+          .map(s => slotsMap.get(s.id))
+          .filter((s): s is NonNullable<typeof s> => s !== undefined);
       }
     }
   } catch (error) {

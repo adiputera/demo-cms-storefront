@@ -7,6 +7,7 @@ import id.adiputera.demo.cms.converter.CmsValueConverter;
 import id.adiputera.demo.cms.converter.DefaultFormatter;
 import id.adiputera.demo.cms.converter.DefaultValueConverter;
 import id.adiputera.demo.cms.entity.ItemModel;
+import id.adiputera.demo.cms.entity.CatalogAwareModel;
 import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.metamodel.EntityType;
@@ -118,11 +119,22 @@ public class CmsTypeRegistry {
 
         fields.sort(Comparator.comparingInt(CmsFieldMetadata::getOrder));
 
+        String syncKeyFieldName = null;
+        if (CatalogAwareModel.class.isAssignableFrom(clazz)) {
+            try {
+                CatalogAwareModel dummy = (CatalogAwareModel) clazz.getDeclaredConstructor().newInstance();
+                syncKeyFieldName = dummy.getSyncKeyFieldName();
+            } catch (Exception e) {
+                log.warn("Failed to resolve syncKeyFieldName for class {}: {}", clazz.getName(), e.getMessage());
+            }
+        }
+
         CmsTypeMetadata typeMeta = CmsTypeMetadata.builder()
                 .code(typeCode)
                 .displayName(displayName)
                 .entityClass(clazz)
                 .fields(fields)
+                .syncKeyFieldName(syncKeyFieldName)
                 .build();
 
         registry.put(typeCode, typeMeta);
