@@ -44,7 +44,13 @@ import java.util.stream.Collectors;
 @Component
 public class EntityMapper {
 
-    // Page Mapping
+    /**
+     * Maps a Page entity to its DTO, optionally including slot summaries.
+     *
+     * @param page The Page entity to map.
+     * @param includeSlots Whether to include slot metadata in the response.
+     * @return The mapped PageDTO, or null if the input page is null.
+     */
     public PageDTO toPageDTO(Page page, boolean includeSlots) {
         if (page == null) {
             return null;
@@ -68,7 +74,9 @@ public class EntityMapper {
         // Map breadcrumbs
         if (page.getBreadcrumbs() != null) {
             List<BreadcrumbDTO> breadcrumbs = page.getBreadcrumbs().stream()
+                    .filter(java.util.Objects::nonNull)
                     .map(this::toBreadcrumbDTO)
+                    .filter(java.util.Objects::nonNull)
                     .collect(Collectors.toList());
             builder.breadcrumbs(breadcrumbs);
         }
@@ -76,11 +84,13 @@ public class EntityMapper {
         // Map slots (metadata only, no components)
         if (includeSlots && page.getSlots() != null) {
             List<SlotDTO> slots = page.getSlots().stream()
+                    .filter(java.util.Objects::nonNull)
                     .map(slot -> SlotDTO.builder()
                             .id(slot.getId())
                             .code(slot.getCode())
                             .name(slot.getName())
                             .build())
+                    .filter(java.util.Objects::nonNull)
                     .collect(Collectors.toList());
             builder.slots(slots);
         }
@@ -88,7 +98,12 @@ public class EntityMapper {
         return builder.build();
     }
 
-    // Breadcrumb Mapping
+    /**
+     * Maps a Page entity to a BreadcrumbDTO.
+     *
+     * @param page The Page entity to map.
+     * @return The mapped BreadcrumbDTO, or null if the input page is null.
+     */
     public BreadcrumbDTO toBreadcrumbDTO(Page page) {
         if (page == null) {
             return null;
@@ -100,7 +115,12 @@ public class EntityMapper {
                 .build();
     }
 
-    // Slot Mapping with Components
+    /**
+     * Maps a Slot entity along with all its associated components to a SlotDTO.
+     *
+     * @param slot The Slot entity to map.
+     * @return The mapped SlotDTO containing component list, or null if input slot is null.
+     */
     public SlotDTO toSlotDTOWithComponents(Slot slot) {
         if (slot == null) {
             return null;
@@ -110,6 +130,9 @@ public class EntityMapper {
         if (slot.getComponents() != null) {
             int sortOrder = 0;
             for (id.adiputera.demo.cms.entity.Component component : slot.getComponents()) {
+                if (component == null) {
+                    continue;
+                }
                 ComponentDTO dto = toComponentDTO(component);
                 if (dto != null) {
                     dto.setSortOrder(sortOrder++);
@@ -126,7 +149,12 @@ public class EntityMapper {
                 .build();
     }
 
-    // Component Mapping (Polymorphic)
+    /**
+     * Polymorphic method to map a Component entity to its specific ComponentDTO subtype.
+     *
+     * @param component The Component entity to map.
+     * @return The mapped ComponentDTO subtype, or null if input component is null.
+     */
     public ComponentDTO toComponentDTO(id.adiputera.demo.cms.entity.Component component) {
         if (component == null) {
             return null;
@@ -148,6 +176,12 @@ public class EntityMapper {
         };
     }
 
+    /**
+     * Maps a TopEventComponent entity to its DTO representation.
+     *
+     * @param component The TopEventComponent entity.
+     * @return The mapped TopEventComponentDTO, or null if input is null.
+     */
     private TopEventComponentDTO toTopEventComponentDTO(TopEventComponent component) {
         if (component == null) return null;
         return TopEventComponentDTO.builder()
@@ -160,6 +194,12 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a TrendingArticleComponent entity to its DTO representation.
+     *
+     * @param component The TrendingArticleComponent entity.
+     * @return The mapped TrendingArticleComponentDTO, or null if input is null.
+     */
     private TrendingArticleComponentDTO toTrendingArticleComponentDTO(TrendingArticleComponent component) {
         if (component == null) return null;
         List<String> articleSlugs = component.getArticleSlugs() != null
@@ -175,7 +215,14 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a ParagraphComponent entity to its DTO representation.
+     *
+     * @param component The ParagraphComponent entity.
+     * @return The mapped ParagraphComponentDTO, or null if input is null.
+     */
     private ParagraphComponentDTO toParagraphComponentDTO(ParagraphComponent component) {
+        if (component == null) return null;
         return ParagraphComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -186,7 +233,14 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a BannerComponent entity to its DTO representation.
+     *
+     * @param component The BannerComponent entity.
+     * @return The mapped BannerComponentDTO, or null if input is null.
+     */
     private BannerComponentDTO toBannerComponentDTO(BannerComponent component) {
+        if (component == null) return null;
         return BannerComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -225,7 +279,14 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a NavigationComponent entity to its DTO representation.
+     *
+     * @param component The NavigationComponent entity.
+     * @return The mapped NavigationComponentDTO, or null if input is null.
+     */
     private NavigationComponentDTO toNavigationComponentDTO(NavigationComponent component) {
+        if (component == null) return null;
         return NavigationComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -237,7 +298,14 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a QuickMenuComponent entity to its DTO representation.
+     *
+     * @param component The QuickMenuComponent entity.
+     * @return The mapped QuickMenuComponentDTO, or null if input is null.
+     */
     private QuickMenuComponentDTO toQuickMenuComponentDTO(QuickMenuComponent component) {
+        if (component == null) return null;
         return QuickMenuComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -247,9 +315,16 @@ public class EntityMapper {
                 .imageUrl(component.getImageUrl())
                 .url(component.getUrl())
                 .build();
-     }
+    }
 
+    /**
+     * Maps a ProductDetailComponent entity to its DTO representation.
+     *
+     * @param component The ProductDetailComponent entity.
+     * @return The mapped ProductDetailComponentDTO, or null if input is null.
+     */
     private ProductDetailComponentDTO toProductDetailComponentDTO(ProductDetailComponent component) {
+        if (component == null) return null;
         return ProductDetailComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -261,7 +336,14 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a LatestArticleComponent entity to its DTO representation.
+     *
+     * @param component The LatestArticleComponent entity.
+     * @return The mapped LatestArticleComponentDTO, or null if input is null.
+     */
     private LatestArticleComponentDTO toLatestArticleComponentDTO(LatestArticleComponent component) {
+        if (component == null) return null;
         return LatestArticleComponentDTO.builder()
                 .id(component.getId())
                 .uid(component.getUid())
@@ -272,6 +354,12 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a LatestEventComponent entity to its DTO representation.
+     *
+     * @param component The LatestEventComponent entity.
+     * @return The mapped LatestEventComponentDTO, or null if input is null.
+     */
     private LatestEventComponentDTO toLatestEventComponentDTO(LatestEventComponent component) {
         if (component == null) return null;
         List<String> eventSlugs = component.getEventSlugs() != null
@@ -287,7 +375,12 @@ public class EntityMapper {
                 .build();
     }
 
-    // Product Mapping
+    /**
+     * Maps a Product entity to a ProductDTO.
+     *
+     * @param product The Product entity to map.
+     * @return The mapped ProductDTO, or null if input product is null.
+     */
     public ProductDTO toProductDTO(Product product) {
         if (product == null) {
             return null;
@@ -303,13 +396,21 @@ public class EntityMapper {
                 .build();
     }
 
+    /**
+     * Maps a list of Product entities to a list of ProductDTOs.
+     *
+     * @param products The list of Product entities.
+     * @return A list of mapped ProductDTOs, ignoring null entries.
+     */
     public List<ProductDTO> toProductDTOList(List<Product> products) {
         if (products == null) {
             return Collections.emptyList();
         }
 
         return products.stream()
+                .filter(java.util.Objects::nonNull)
                 .map(this::toProductDTO)
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 }

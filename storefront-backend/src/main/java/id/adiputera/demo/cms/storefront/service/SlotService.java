@@ -26,6 +26,12 @@ public class SlotService {
     private final SlotRepository slotRepository;
     private final EntityMapper entityMapper;
 
+    /**
+     * Retrieves a list of slot DTOs with their components by their IDs.
+     *
+     * @param slotIds The list of slot IDs to retrieve.
+     * @return A list of mapped SlotDTO objects.
+     */
     @Cacheable(value = "slots", key = "#slotIds.toString()")
     @Transactional(readOnly = true)
     public List<SlotDTO> getSlotsByIds(List<Long> slotIds) {
@@ -38,7 +44,9 @@ public class SlotService {
         List<Slot> slots = slotRepository.findByIdInWithComponents(slotIds);
 
         return slots.stream()
+                .filter(java.util.Objects::nonNull)
                 .map(entityMapper::toSlotDTOWithComponents)
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 }

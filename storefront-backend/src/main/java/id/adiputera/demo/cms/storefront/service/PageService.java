@@ -24,6 +24,12 @@ public class PageService {
     private final PageRepository pageRepository;
     private final EntityMapper entityMapper;
 
+    /**
+     * Retrieves a page DTO by its slug.
+     *
+     * @param slug The slug of the page to retrieve.
+     * @return The mapped PageDTO.
+     */
     @Cacheable(value = "pages", key = "#slug")
     @Transactional(readOnly = true)
     public PageDTO getPageBySlug(String slug) {

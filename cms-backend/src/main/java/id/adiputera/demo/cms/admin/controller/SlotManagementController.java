@@ -51,6 +51,11 @@ public class SlotManagementController {
     private final EntityMapper entityMapper;
     private final id.adiputera.demo.cms.admin.service.CatalogSyncService catalogSyncService;
 
+    /**
+     * Retrieves or creates the STAGED catalog.
+     *
+     * @return The STAGED catalog entity.
+     */
     private id.adiputera.demo.cms.entity.Catalog getStagedCatalog() {
         return catalogRepository.findByCatalogIdAndVersion("contentCatalog", id.adiputera.demo.cms.entity.CatalogVersion.STAGED)
             .orElseGet(() -> {
@@ -61,6 +66,37 @@ public class SlotManagementController {
             });
     }
 
+    /**
+     * Retrieves all slots across all pages.
+     *
+     * @return A list of all slot responses.
+     */
+    @GetMapping
+    public ResponseEntity<List<SlotResponse>> getAllSlots() {
+        List<Slot> slots = slotRepository.findAll();
+
+        java.util.Map<String, String> slotSyncStatus = catalogSyncService.calculateSyncStatus(slots, Slot.class);
+
+        List<id.adiputera.demo.cms.entity.Component> allComponents = slots.stream()
+                .filter(java.util.Objects::nonNull)
+                .flatMap(s -> s.getComponents() != null ? s.getComponents().stream().filter(java.util.Objects::nonNull) : java.util.stream.Stream.empty())
+                .collect(Collectors.toList());
+        java.util.Map<String, String> componentSyncStatus = catalogSyncService.calculateSyncStatus(allComponents, id.adiputera.demo.cms.entity.Component.class);
+
+        List<SlotResponse> responses = slots.stream()
+                .filter(java.util.Objects::nonNull)
+                .map(slot -> mapToSlotResponse(slot, slotSyncStatus, componentSyncStatus))
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    /**
+     * Retrieves all slots belonging to a specific page.
+     *
+     * @param pageId The ID of the page.
+     * @return A list of slot responses for the page.
+     */
     @GetMapping("/page/{pageId}")
     public ResponseEntity<List<SlotResponse>> getSlotsByPage(@PathVariable Long pageId) {
         List<Slot> slots = slotRepository.findByPageId(pageId);
@@ -69,16 +105,25 @@ public class SlotManagementController {
         
         // Also calculate for components
         List<id.adiputera.demo.cms.entity.Component> allComponents = slots.stream()
-                .flatMap(s -> s.getComponents().stream())
+                .filter(java.util.Objects::nonNull)
+                .flatMap(s -> s.getComponents() != null ? s.getComponents().stream().filter(java.util.Objects::nonNull) : java.util.stream.Stream.empty())
                 .collect(Collectors.toList());
         java.util.Map<String, String> componentSyncStatus = catalogSyncService.calculateSyncStatus(allComponents, id.adiputera.demo.cms.entity.Component.class);
 
         List<SlotResponse> responses = slots.stream()
+            .filter(java.util.Objects::nonNull)
             .map(slot -> mapToSlotResponse(slot, slotSyncStatus, componentSyncStatus))
+            .filter(java.util.Objects::nonNull)
             .collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
+    /**
+     * Retrieves a slot by its ID.
+     *
+     * @param id The slot ID.
+     * @return The slot response.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<SlotResponse> getSlot(@PathVariable Long id) {
         Slot slot = slotRepository.findByIdWithComponents(id)
@@ -91,6 +136,12 @@ public class SlotManagementController {
         return ResponseEntity.ok(mapToSlotResponse(slot, slotSyncStatus, componentSyncStatus));
     }
 
+    /**
+     * Creates a new slot.
+     *
+     * @param request The create slot request containing code, name, and page ID.
+     * @return The created slot response.
+     */
     @PostMapping
     @Transactional
     public ResponseEntity<SlotResponse> createSlot(@Valid @RequestBody CreateSlotRequest request) {
@@ -115,6 +166,13 @@ public class SlotManagementController {
         return ResponseEntity.status(HttpStatus.CREATED).body(mapToSlotResponse(savedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
+    /**
+     * Updates an existing slot.
+     *
+     * @param id The ID of the slot to update.
+     * @param request The update slot request containing the new code and name.
+     * @return The updated slot response.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<SlotResponse> updateSlot(
             @PathVariable Long id,
@@ -130,6 +188,13 @@ public class SlotManagementController {
         return ResponseEntity.ok(mapToSlotResponse(updatedSlot, new java.util.HashMap<>(), new java.util.HashMap<>()));
     }
 
+    /**
+     * Reorders a slot within its assigned page.
+     *
+     * @param id The ID of the slot to reorder.
+     * @param request The request specifying the new sort order index.
+     * @return A response entity with no content.
+     */
     @PutMapping("/{id}/reorder")
     @Transactional
     public ResponseEntity<Void> reorderSlot(
@@ -161,6 +226,12 @@ public class SlotManagementController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Deletes a slot by its ID.
+     *
+     * @param id The ID of the slot to delete.
+     * @return A response entity with no content.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteSlot(@PathVariable Long id) {
         if (!slotRepository.existsById(id)) {
@@ -170,11 +241,21 @@ public class SlotManagementController {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * Maps a Slot entity to a SlotResponse DTO using the provided sync status maps.
+     *
+     * @param slot The slot entity to map.
+     * @param slotSyncStatus A map of slot sync keys to their synchronization status.
+     * @param componentSyncStatus A map of component sync keys to their synchronization status.
+     * @return The mapped SlotResponse.
+     */
     private SlotResponse mapToSlotResponse(Slot slot, java.util.Map<String, String> slotSyncStatus, java.util.Map<String, String> componentSyncStatus) {
+        if (slot == null) return null;
         java.util.List<ComponentDTO> componentDTOs = new java.util.ArrayList<>();
         if (slot.getComponents() != null) {
             int sortOrder = 0;
             for (id.adiputera.demo.cms.entity.Component component : slot.getComponents()) {
+                if (component == null) continue;
                 ComponentDTO dto = entityMapper.toComponentDTO(component);
                 if (dto != null) {
                     dto.setSortOrder(sortOrder++);
@@ -188,7 +269,7 @@ public class SlotManagementController {
             .id(slot.getId())
             .code(slot.getCode())
             .name(slot.getName())
-            .pageId(slot.getPage().getId())
+            .pageId(slot.getPage() != null ? slot.getPage().getId() : null)
             .components(componentDTOs)
             .syncStatus(slotSyncStatus.getOrDefault(slot.getSyncKey(), "UNKNOWN"))
             .build();

@@ -26,6 +26,11 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final EntityMapper entityMapper;
 
+    /**
+     * Retrieves all online products.
+     *
+     * @return A list of ProductDTO objects.
+     */
     @Cacheable(value = "products", key = "'all'")
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
@@ -34,6 +39,12 @@ public class ProductService {
         return entityMapper.toProductDTOList(products);
     }
 
+    /**
+     * Retrieves a single product by its unique code.
+     *
+     * @param code The unique product code.
+     * @return The mapped ProductDTO.
+     */
     @Cacheable(value = "products", key = "#code")
     @Transactional(readOnly = true)
     public ProductDTO getProductByCode(String code) {
@@ -43,6 +54,12 @@ public class ProductService {
         return entityMapper.toProductDTO(product);
     }
 
+    /**
+     * Retrieves products matching the specified list of codes.
+     *
+     * @param codes The list of product codes to query.
+     * @return A list of matching ProductDTO objects.
+     */
     @Transactional(readOnly = true)
     public List<ProductDTO> getProductsByCodes(List<String> codes) {
         log.debug("Fetching products with codes: {}", codes);

@@ -35,6 +35,11 @@ public class PageManagementController {
 
     private final PageManagementService pageManagementService;
 
+    /**
+     * Retrieves all pages.
+     *
+     * @return A response entity containing the list of all page DTOs.
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<PageDTO>>> getAllPages() {
         log.info("GET /api/cms/pages");
@@ -42,6 +47,12 @@ public class PageManagementController {
         return ResponseEntity.ok(ApiResponse.success(pages));
     }
 
+    /**
+     * Retrieves a page by its ID.
+     *
+     * @param id The ID of the page.
+     * @return A response entity containing the page DTO.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<PageDTO>> getPageById(@PathVariable("id") Long id) {
         log.info("GET /api/cms/pages/{}", id);
@@ -49,6 +60,12 @@ public class PageManagementController {
         return ResponseEntity.ok(ApiResponse.success(page));
     }
 
+    /**
+     * Creates a new page.
+     *
+     * @param request The request containing details of the page to create.
+     * @return A response entity containing the created page DTO.
+     */
     @PostMapping
     public ResponseEntity<ApiResponse<PageDTO>> createPage(@Valid @RequestBody CreatePageRequest request) {
         log.info("POST /api/cms/pages - Creating page with slug: {}", request.getSlug());
@@ -73,6 +90,13 @@ public class PageManagementController {
                 .body(ApiResponse.success("Page created successfully", createdPage));
     }
 
+    /**
+     * Updates an existing page.
+     *
+     * @param id The ID of the page to update.
+     * @param request The request containing updated page details.
+     * @return A response entity containing the updated page DTO.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<PageDTO>> updatePage(
             @PathVariable("id") Long id,
@@ -98,6 +122,12 @@ public class PageManagementController {
         return ResponseEntity.ok(ApiResponse.success("Page updated successfully", updatedPage));
     }
 
+    /**
+     * Deletes a page by its ID.
+     *
+     * @param id The ID of the page to delete.
+     * @return A response entity confirming successful deletion.
+     */
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deletePage(@PathVariable("id") Long id) {
         log.info("DELETE /api/cms/pages/{}", id);

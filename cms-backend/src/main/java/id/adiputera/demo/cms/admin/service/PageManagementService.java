@@ -32,6 +32,11 @@ public class PageManagementService {
     private final EntityMapper entityMapper;
     private final CatalogSyncService catalogSyncService;
 
+    /**
+     * Retrieves or creates the STAGED catalog entity.
+     *
+     * @return The STAGED catalog.
+     */
     private Catalog getStagedCatalog() {
         return catalogRepository.findByCatalogIdAndVersion("contentCatalog", id.adiputera.demo.cms.entity.CatalogVersion.STAGED)
             .orElseGet(() -> {
@@ -42,6 +47,11 @@ public class PageManagementService {
             });
     }
 
+    /**
+     * Retrieves all pages belonging to the STAGED catalog.
+     *
+     * @return A list of mapped PageDTO objects.
+     */
     @Transactional
     public List<PageDTO> getAllPages() {
         log.debug("Fetching all pages");
@@ -50,14 +60,24 @@ public class PageManagementService {
         Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(pages, Page.class);
         
         return pages.stream()
+                .filter(java.util.Objects::nonNull)
                 .map(page -> {
                     PageDTO dto = entityMapper.toPageDTO(page, false);
-                    dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+                    if (dto != null) {
+                        dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+                    }
                     return dto;
                 })
+                .filter(java.util.Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Retrieves a page DTO by its ID.
+     *
+     * @param id The ID of the page.
+     * @return The mapped PageDTO.
+     */
     @Transactional
     public PageDTO getPageById(Long id) {
         log.debug("Fetching page with ID: {}", id);
@@ -66,10 +86,18 @@ public class PageManagementService {
         
         Map<String, String> syncStatusMap = catalogSyncService.calculateSyncStatus(List.of(page), Page.class);
         PageDTO dto = entityMapper.toPageDTO(page, true);
-        dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+        if (dto != null) {
+            dto.setSyncStatus(syncStatusMap.getOrDefault(page.getSyncKey(), "UNKNOWN"));
+        }
         return dto;
     }
 
+    /**
+     * Creates a new page.
+     *
+     * @param pageDTO The page data transfer object.
+     * @return The created and mapped PageDTO.
+     */
     @Transactional
     public PageDTO createPage(PageDTO pageDTO) {
         log.info("Creating new page with slug: {}", pageDTO.getSlug());
@@ -99,6 +127,13 @@ public class PageManagementService {
         return entityMapper.toPageDTO(savedPage, true);
     }
 
+    /**
+     * Updates an existing page.
+     *
+     * @param id The ID of the page to update.
+     * @param pageDTO The updated page data.
+     * @return The updated and mapped PageDTO.
+     */
     @Transactional
     public PageDTO updatePage(Long id, PageDTO pageDTO) {
         log.info("Updating page with ID: {}", id);
@@ -130,6 +165,11 @@ public class PageManagementService {
         return entityMapper.toPageDTO(updatedPage, true);
     }
 
+    /**
+     * Deletes a page by its ID.
+     *
+     * @param id The ID of the page to delete.
+     */
     @Transactional
     public void deletePage(Long id) {
         log.info("Deleting page with ID: {}", id);
