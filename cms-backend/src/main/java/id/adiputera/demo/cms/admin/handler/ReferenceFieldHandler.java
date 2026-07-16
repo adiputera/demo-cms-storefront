@@ -13,7 +13,7 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Root;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -28,13 +28,11 @@ import java.util.Map;
  * @author Yusuf F. Adiputera
  */
 @Component
+@RequiredArgsConstructor
 public class ReferenceFieldHandler implements CmsFieldHandler {
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
-    @Autowired
-    private CmsTypeRegistry cmsTypeRegistry;
+    private final EntityManager entityManager;
+    private final CmsTypeRegistry cmsTypeRegistry;
 
     /**
      * Gets the supported CmsFieldType.

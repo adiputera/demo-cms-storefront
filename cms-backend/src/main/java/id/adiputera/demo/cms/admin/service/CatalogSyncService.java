@@ -1,5 +1,6 @@
 package id.adiputera.demo.cms.admin.service;
 
+import id.adiputera.demo.cms.admin.exception.BadRequestException;
 import id.adiputera.demo.cms.admin.repository.CatalogAwareRepository;
 import id.adiputera.demo.cms.admin.repository.CatalogRepository;
 import id.adiputera.demo.cms.annotation.CmsField;
@@ -36,6 +37,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
@@ -60,6 +62,9 @@ public class CatalogSyncService {
     private TransactionTemplate transactionTemplate;
     private List<Class<? extends CatalogAwareModel>> sortedEntityClasses = new ArrayList<>();
 
+    /**
+     * Initializes repository and transaction support after construction, then performs topological sorting of catalog models.
+     */
     @PostConstruct
     public void init() {
         this.repositories = new Repositories(applicationContext);
@@ -67,6 +72,9 @@ public class CatalogSyncService {
         buildTopologicalSort();
     }
 
+    /**
+     * Builds a topological sort order for CatalogAwareModel entities based on their entity relationships.
+     */
     private void buildTopologicalSort() {
         Set<Class<? extends CatalogAwareModel>> nodes = new HashSet<>();
         Map<Class<? extends CatalogAwareModel>, Set<Class<? extends CatalogAwareModel>>> adjList = new HashMap<>();
@@ -148,6 +156,11 @@ public class CatalogSyncService {
         log.info("Catalog Sync Entity Order Resolved: {}", sortedEntityClasses.stream().map(Class::getSimpleName).toList());
     }
 
+    /**
+     * Synchronizes all staged catalog items to the online catalog following topological entity order.
+     *
+     * @param catalogId The catalog identifier to synchronize.
+     */
     public void syncCatalog(String catalogId) {
         log.info("Starting universal sync for catalog: {}", catalogId);
 
@@ -171,6 +184,12 @@ public class CatalogSyncService {
         log.info("Universal catalog sync completed successfully for: {}", catalogId);
     }
 
+    /**
+     * Synchronizes a single staged catalog item to the online catalog.
+     *
+     * @param entityType The simple name of the entity class.
+     * @param itemId The unique ID of the staged item.
+     */
     @SuppressWarnings("unchecked")
     @Transactional
     public void syncSingleItem(String entityType, Long itemId) {
@@ -208,7 +227,9 @@ public class CatalogSyncService {
         List<CatalogAwareModel> onlineRecords = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
         Map<String, CatalogAwareModel> typeCache = new HashMap<>();
         for (CatalogAwareModel m : onlineRecords) {
-            typeCache.put(m.getSyncKey(), m);
+            if (m != null && m.getSyncKey() != null) {
+                typeCache.put(m.getSyncKey(), m);
+            }
         }
         syncedCache.put(targetClass, typeCache);
 
@@ -229,6 +250,15 @@ public class CatalogSyncService {
         log.info("Single item sync completed for {} with ID: {}", entityType, itemId);
     }
 
+    /**
+     * Calculates the synchronization status map for a list of staged items within a specific catalog.
+     *
+     * @param <T> The type extending CatalogAwareModel.
+     * @param stagedItems The list of staged catalog items.
+     * @param entityClass The entity class type.
+     * @param catalogId The target catalog identifier.
+     * @return Map of sync key to status string (SYNCED, OUT_OF_SYNC, NOT_SYNCED, or UNKNOWN).
+     */
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
     public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(
@@ -255,10 +285,13 @@ public class CatalogSyncService {
         List<T> onlineRecords = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
         Map<String, T> onlineMap = new HashMap<>();
         for (T o : onlineRecords) {
-            onlineMap.put(o.getSyncKey(), o);
+            if (o != null && o.getSyncKey() != null) {
+                onlineMap.put(o.getSyncKey(), o);
+            }
         }
 
         for (T staged : stagedItems) {
+            if (staged == null || staged.getSyncKey() == null) continue;
             T online = onlineMap.get(staged.getSyncKey());
             if (online == null) {
                 statusMap.put(staged.getSyncKey(), "NOT_SYNCED");
@@ -271,17 +304,36 @@ public class CatalogSyncService {
         return statusMap;
     }
 
+    /**
+     * Calculates the synchronization status map for a list of staged items, deriving the catalog identifier from the first item.
+     *
+     * @param <T> The type extending CatalogAwareModel.
+     * @param stagedItems The list of staged catalog items.
+     * @param entityClass The entity class type.
+     * @return Map of sync key to status string.
+     */
     @Transactional(readOnly = true)
     public <T extends CatalogAwareModel> Map<String, String> calculateSyncStatus(List<T> stagedItems, Class<T> entityClass) {
         if (stagedItems.isEmpty()) return new HashMap<>();
+        T firstItem = stagedItems.stream().filter(Objects::nonNull).findFirst().orElse(null);
+        if (firstItem == null) return new HashMap<>();
         // Force-initialize the lazy catalog proxy so getCatalogId() is safe outside a session
-        org.hibernate.Hibernate.initialize(stagedItems.get(0).getCatalog());
-        String catalogId = stagedItems.get(0).getCatalog() != null
-                ? stagedItems.get(0).getCatalog().getCatalogId()
+        org.hibernate.Hibernate.initialize(firstItem.getCatalog());
+        String catalogId = firstItem.getCatalog() != null
+                ? firstItem.getCatalog().getCatalogId()
                 : "contentCatalog";
         return calculateSyncStatus(stagedItems, entityClass, catalogId);
     }
 
+    /**
+     * Synchronizes all entities of a specific class from the staged catalog to the online catalog.
+     *
+     * @param <T> The type extending CatalogAwareModel.
+     * @param entityClass The entity class to synchronize.
+     * @param stagedCatalog The source staged catalog.
+     * @param onlineCatalog The target online catalog.
+     * @param syncedCache The global cache tracking synchronized items across classes.
+     */
     @SuppressWarnings("unchecked")
     private <T extends CatalogAwareModel> void syncEntityClass(
             Class<T> entityClass, 
@@ -313,10 +365,13 @@ public class CatalogSyncService {
                 List<T> onlineBatchFetch = repo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
                 Map<String, T> onlineExistingMap = new HashMap<>();
                 for (T o : onlineBatchFetch) {
-                    onlineExistingMap.put(o.getSyncKey(), o);
+                    if (o != null && o.getSyncKey() != null) {
+                        onlineExistingMap.put(o.getSyncKey(), o);
+                    }
                 }
 
                 for (T stagedEntity : batch.getContent()) {
+                    if (stagedEntity == null || stagedEntity.getSyncKey() == null) continue;
                     T onlineEntity = onlineExistingMap.get(stagedEntity.getSyncKey());
                     if (onlineEntity == null) {
                         onlineEntity = instantiateEntity(stagedEntity);
@@ -335,7 +390,9 @@ public class CatalogSyncService {
 
                     // 5. Save and add to global cache for downstream dependents
                     onlineEntity = repo.save(onlineEntity);
-                    entityCache.put(onlineEntity.getSyncKey(), onlineEntity);
+                    if (onlineEntity != null && onlineEntity.getSyncKey() != null) {
+                        entityCache.put(onlineEntity.getSyncKey(), onlineEntity);
+                    }
                 }
 
                 entityManager.flush();
@@ -356,6 +413,14 @@ public class CatalogSyncService {
         log.info("Synced {} records for {}", totalSynced, entityClass.getSimpleName());
     }
 
+    /**
+     * Copies non-relational and non-collection properties from source entity to target entity.
+     *
+     * @param <T> The entity type.
+     * @param source The source staged entity.
+     * @param target The target online entity.
+     * @param entityClass The entity class.
+     */
     private <T> void copySimpleProperties(T source, T target, Class<?> entityClass) {
         EntityType<?> entityType = entityManager.getMetamodel().entity(entityClass);
         List<String> ignoredProperties = new ArrayList<>(List.of("id", "catalog", "createdAt", "updatedAt", "syncVersion"));
@@ -372,6 +437,16 @@ public class CatalogSyncService {
         }
     }
 
+    /**
+     * Resolves and populates relational references on the target online entity from cached online records.
+     *
+     * @param <T> The type extending CatalogAwareModel.
+     * @param staged The source staged entity.
+     * @param online The target online entity.
+     * @param entityClass The entity class.
+     * @param cache The global synchronized items cache.
+     * @param onlineCatalog The target online catalog.
+     */
     private <T extends CatalogAwareModel> void resolveRelationships(
             T staged, T online, Class<?> entityClass, Map<Class<?>, Map<String, CatalogAwareModel>> cache, Catalog onlineCatalog) {
         
@@ -413,6 +488,7 @@ public class CatalogSyncService {
                 // Build list of synced items
                 List<Object> syncedItems = new ArrayList<>();
                 for (CatalogAwareModel stagedItem : stagedCol) {
+                    if (stagedItem == null || stagedItem.getSyncKey() == null) continue;
                     CatalogAwareModel onlineItem = getFromCache(targetType, stagedItem.getSyncKey(), cache, onlineCatalog);
                     if (onlineItem != null) {
                         syncedItems.add(onlineItem);
@@ -449,15 +525,27 @@ public class CatalogSyncService {
                 if (!CatalogAwareModel.class.isAssignableFrom(targetType)) continue;
 
                 CatalogAwareModel stagedRef = (CatalogAwareModel) stagedVal;
-                CatalogAwareModel onlineRef = getFromCache(targetType, stagedRef.getSyncKey(), cache, onlineCatalog);
-                if (onlineRef != null) {
-                    onlineWrapper.setPropertyValue(propName, onlineRef);
+                if (stagedRef != null && stagedRef.getSyncKey() != null) {
+                    CatalogAwareModel onlineRef = getFromCache(targetType, stagedRef.getSyncKey(), cache, onlineCatalog);
+                    if (onlineRef != null) {
+                        onlineWrapper.setPropertyValue(propName, onlineRef);
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Retrieves an online entity instance from cache or lazy-loads it from the database repository.
+     *
+     * @param targetType The target entity class type.
+     * @param syncKey The unique sync key of the entity.
+     * @param cache The global cache map.
+     * @param onlineCatalog The target online catalog.
+     * @return The cached or loaded online model, or null if not found.
+     */
     private CatalogAwareModel getFromCache(Class<?> targetType, String syncKey, Map<Class<?>, Map<String, CatalogAwareModel>> cache, Catalog onlineCatalog) {
+        if (syncKey == null) return null;
         Map<String, CatalogAwareModel> typeCache = cache.get(targetType);
         
         if (typeCache == null) {
@@ -470,7 +558,9 @@ public class CatalogSyncService {
                 CatalogAwareRepository<CatalogAwareModel> targetRepo = (CatalogAwareRepository<CatalogAwareModel>) repoOpt.get();
                 List<CatalogAwareModel> onlineRecords = targetRepo.findAllByCatalog(onlineCatalog, Pageable.unpaged()).getContent();
                 for (CatalogAwareModel m : onlineRecords) {
-                    typeCache.put(m.getSyncKey(), m);
+                    if (m != null && m.getSyncKey() != null) {
+                        typeCache.put(m.getSyncKey(), m);
+                    }
                 }
             }
             cache.put(targetType, typeCache);
@@ -490,6 +580,13 @@ public class CatalogSyncService {
         return null;
     }
 
+    /**
+     * Instantiates a new empty instance of the same actual subclass type as the staged entity.
+     *
+     * @param <T> The entity type.
+     * @param staged The staged entity instance.
+     * @return A new instance of the entity class.
+     */
     @SuppressWarnings("unchecked")
     private <T> T instantiateEntity(T staged) {
         try {
@@ -497,7 +594,7 @@ public class CatalogSyncService {
             Class<?> clazz = org.hibernate.Hibernate.getClass(staged);
             return (T) clazz.getDeclaredConstructor().newInstance();
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
-            throw new RuntimeException("Failed to instantiate entity subclass: " + staged.getClass(), e);
+            throw new BadRequestException("Failed to instantiate entity subclass: " + staged.getClass(), e);
         }
     }
 
